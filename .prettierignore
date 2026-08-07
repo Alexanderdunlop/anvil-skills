@@ -1,0 +1,4 @@
+# The docs are specs. FILE_CONTRACT.md §4.6 requires one JSON object per line
+# in its .jsonl examples, and pretty-printing them makes the document contradict
+# itself in the exact place someone copies from.
+docs/
