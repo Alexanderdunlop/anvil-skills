@@ -26,7 +26,8 @@ anvil-skills/
 │   ├── build/SKILL.md
 │   ├── verify/SKILL.md
 │   ├── review/SKILL.md
-│   └── feedback/SKILL.md
+│   ├── feedback/SKILL.md
+│   └── research/SKILL.md
 ├── docs/
 ├── evals/
 └── README.md
@@ -63,7 +64,7 @@ A bare `.anvil/` path in any `SKILL.md` is a review-blocking defect.
 
 ### Skills, not commands
 
-All seven are `skills/<name>/SKILL.md`. Both `skills/` and `commands/` produce
+All eight are `skills/<name>/SKILL.md`. Both `skills/` and `commands/` produce
 `/name` shortcuts, but `skills/` is the current form and `commands/` is the
 older flat-markdown one. The property anvil needs — invoked by the user,
 never auto-fired by the model — comes from frontmatter, not from the directory:
@@ -76,9 +77,10 @@ disable-model-invocation: true
 ---
 ```
 
-`disable-model-invocation: true` on all seven. Every one of these skills writes
-files and two of them sit behind approval gates; none should ever fire because
-the model thought it seemed relevant.
+`disable-model-invocation: true` on all eight. Seven of the eight write files
+and two of those sit behind approval gates; the eighth, `/research` (§4.11),
+writes nothing but reads the entire feedback history. None should ever fire
+because the model thought it seemed relevant.
 
 A `CLAUDE.md` at this repo's root does **not** load as project context for
 users. Any guidance anvil wants to ship has to live inside a skill.
@@ -96,7 +98,7 @@ the other two. See §4.8 for the modes.
 
 ### When Tree B does not exist
 
-All seven skills install together, so a user can run `/scope` in a repo that has
+All eight skills install together, so a user can run `/scope` in a repo that has
 never seen `/setup`. Every path then resolves to nothing.
 
 > **Any skill that finds no `${CLAUDE_PROJECT_DIR}/.anvil/` stops immediately
@@ -110,8 +112,8 @@ is a clean state. Half-populated is not.
 
 This is also the reason `/setup` cannot be held back for a private M7. If anvil
 is published before M7, a crude `/setup` ships with it — even one that only asks
-questions and writes the files verbatim — because six skills that all refuse to
-run is not a release.
+questions and writes the files verbatim — because seven skills that all refuse
+to run is not a release.
 
 ---
 
@@ -120,7 +122,9 @@ run is not a release.
 A line in a context file is paid every time the command that reads it runs —
 forever. So the default answer to "should this go in a context file?" is **no**.
 
-Anvil no longer owns anything read on _every_ run (§4.10). That makes the cost
+Anvil no longer owns anything read on _every_ run (§4.10) — `CLAUDE.md` in
+`/feedback`'s row in §3 is not a counter-example, since it is read by one
+command and owned by the repo rather than by anvil. That makes the cost
 narrower, not smaller: a line in `process/scope.md` is charged to every future
 `/scope`, and a line in `REVIEW_RULES.md` to every future `/verify` and
 `/review`. A line nobody ever removes is a bill nobody stops paying, and the
@@ -240,7 +244,8 @@ which is why the numbers below are the shipped defaults rather than facts. The p
 | `/build`    | CONFIG + process/build + CONTEXT + PLAN + TEST_CASES                   | 170        |
 | `/verify`   | CONFIG + process/verify + REVIEW_RULES + CRITICAL_PATHS + TEST_CASES   | 140        |
 | `/review`   | CONFIG + process/review + REVIEW_RULES + ticket body + PLAN + the diff | 160 + diff |
-| `/feedback` | all context files + BUDGETS + both feedback logs                       | 180 + logs |
+| `/feedback` | all context files + BUDGETS + both feedback logs + `CLAUDE.md`         | 180 + logs |
+| `/research` | unrouted + both feedback logs                                          | 0 + logs   |
 
 Every row dropped by 30–40 lines when `RULES.md` was deleted (§4.10). `/scope`,
 the command run most often and most casually, now costs 30 lines.
@@ -255,10 +260,21 @@ the one it replaced.
 `/feedback` is the only command that reads everything, because it is the only
 command that writes to context files.
 
+**`CLAUDE.md` in `/feedback`'s row is read for the duplication check only** —
+trigger 2 of the staleness pass (§6), which removes an anvil-side line whose
+substance now appears in `CLAUDE.md`. It carries no budget here because it is
+not an anvil file and its size is not anvil's to control. `/feedback` reads it
+and **never** writes it; the `claude-md` category (§5) proposes, and a human
+edits.
+
+`/research` (§4.11) reads no context file at all. Its inputs are `unrouted.md`
+and the two logs, none of which is budgeted, so its context-file cost is zero.
+
 **Confirmed: the write-only artifacts cost nothing.** `VERIFY.md` (§4.9) and
 the two feedback logs (§4.6) are absent from every row above, and that is
 correct. `VERIFY.md` is read by no skill at all — it is for human reviewers.
-`human.jsonl` and `self.jsonl` are read only by `/feedback`, and it reads both. Neither is read at runtime by `/scope`,
+`human.jsonl` and `self.jsonl` are read only by `/feedback` and `/research`, and
+both of those read both files. Neither is read at runtime by `/scope`,
 `/kickoff`, `/build`, `/verify` or `/review`, so neither has a budget and
 neither affects the numbers in this table. This is why they are allowed to grow
 without limit while context files are not.
@@ -354,8 +370,9 @@ checklist when it is set.
 
 ### 4.2 `.anvil/BUDGETS.md`
 
-**Purpose.** Per-project overrides for the line budgets in §4. Optional — a
-repo with no `BUDGETS.md` uses the shipped defaults, which is the expected case.
+**Purpose.** Per-project overrides for the numbers anvil ships as defaults: the
+line budgets in §4, and the staleness threshold in §6. Optional — a repo with no
+`BUDGETS.md` uses the shipped defaults, which is the expected case.
 
 **Read by.** `/feedback` only.
 
@@ -364,7 +381,7 @@ it. See §6 step 4.
 
 **Budget.** None, and it has no runtime cost.
 
-**Format.** `key: number`, one per line. Any budget not listed uses its default.
+**Format.** `key: number`, one per line. Any key not listed uses its default.
 
 ```markdown
 # Budgets
@@ -372,10 +389,28 @@ it. See §6 step 4.
 critical_paths: 60
 review_rules: 45
 process:scope: 40
+stale_after: 8
 ```
 
 Keys: `config`, `critical_paths`, `review_rules`, `process`, `process:<command>`,
-`ticket`, `context`, `plan`, `test_cases`.
+`ticket`, `context`, `plan`, `test_cases`, `stale_after`.
+
+**`stale_after`.** The only key that is not a line count. It is the number of
+tickets after which a promoted line whose fingerprint has gone quiet is
+presented for review — §6, trigger 3. Default **20**.
+
+It belongs in this file rather than in the skill for exactly the reason §4.5
+gives for not seeding `process/*.md`: 20 is a shipped guess about a repo anvil
+has never seen. It is a guess with a much smaller blast radius than a seeded
+line, because getting it wrong delays or hastens a _question_ rather than
+installing a constraint — but it still shapes behaviour in every repo, and a
+shipped guess that shapes behaviour is a thing a project must be able to
+override. A repo shipping several tickets a week wants its question after five,
+not after twenty; a repo shipping one a month wants the opposite. Neither
+number is knowable from here.
+
+It is here and not in `CONFIG.md` for the reason set out below: only
+`/feedback` acts on it, so only `/feedback` should pay to read it.
 
 **`process` and `process:<command>`.** `process` sets the ceiling for all five
 `process/*.md` at once. `process:<command>` overrides one of them, and takes
@@ -418,9 +453,10 @@ project making an informed decision. That is different in kind from a file
 drifting upward because nobody wanted to delete anything.
 
 **When a file is full, drop stale lines first and raise the ceiling second.**
-That order matters. Reaching for the ceiling first means never discovering which
-existing lines had stopped earning their place, and a file that has never been
-pruned is where the ceiling gets raised again six weeks later.
+That order matters, and §6's staleness pass is what defines "stale". Reaching
+for the ceiling first means never discovering which existing lines had stopped
+earning their place, and a file that has never been pruned is where the ceiling
+gets raised again six weeks later.
 
 **Direction of travel.** The system should lean toward dropping old lines rather
 than growing. A budget that only ever goes up is a signal worth acting on: it
@@ -555,9 +591,9 @@ One file per command: `scope.md`, `kickoff.md`, `build.md`, `verify.md`,
 ### 4.6 `.anvil/feedback/human.jsonl` and `.anvil/feedback/self.jsonl`
 
 **Purpose.** Append-only record of every correction and every stall, in the
-moment it happened. This is raw material, not context. No command except
-`/feedback` reads them, and they have no size budget — they are the evidence
-base, and throwing evidence away is how the system stops learning.
+moment it happened. This is raw material, not context. Only `/feedback` and
+`/research` (§4.11) read them, and they have no size budget — they are the
+evidence base, and throwing evidence away is how the system stops learning.
 
 Two files, **one schema**, split by who noticed:
 
@@ -725,6 +761,9 @@ blind to your own design errors.
 
 **Budget.** None, but `/feedback` prints the count on every run, and a count
 above 10 is a prompt to review the categories.
+
+**Read by.** `/feedback` and `/research` (§4.11). It is `/research`'s primary
+input — the pile is the question set.
 
 **Written by.** `/feedback`.
 
@@ -906,6 +945,68 @@ is read on every run.
 
 ---
 
+### 4.11 `/research` — the outward channel
+
+`/research` is the one skill in §0's tree that specifies no file of its own. It
+is listed here because every other skill is, and an omission would read as an
+oversight.
+
+**Purpose.** Turn the patterns anvil could not resolve into a question aimed
+outside the repo.
+
+The distinction from `/feedback` is the whole justification for the skill, and
+it is a distinction of direction rather than of mechanism:
+
+| Skill       | Evidence         | Acts on           | Output                    |
+| ----------- | ---------------- | ----------------- | ------------------------- |
+| `/feedback` | this repo's logs | this repo's files | promoted lines, evictions |
+| `/research` | this repo's logs | nothing on disk   | a prompt for someone else |
+
+`/feedback` improves **this** repo's files from **this** repo's evidence.
+`/research` turns unresolved patterns into a question for outside
+investigation, and is the channel by which anvil learns from repos its author
+will never see. A repo that keeps parking the same shape of correction knows
+something about the routing table that anvil's author cannot know from here.
+
+**Reads.** `feedback/unrouted.md` and both logs (§4.6, §4.7). Nothing else. It
+reads no context file, so its cost to the numbers in §3 is zero.
+
+**Writes.** Nothing. No context file, no ticket, no log entry, no `unrouted.md`
+edit. It emits a prompt to the session and stops.
+
+That is not an accident of scope — it is what keeps `/review`'s one-writer
+invariant intact while adding an eighth skill that reads the same evidence base
+`/feedback` does. A skill that both read the logs and edited context files
+would be a second writer under a different name.
+
+**The prompt.** One research question, the parked entries that motivate it
+quoted by `fb-NNNN` id, and what an answer would change. Two destinations, and
+the skill names both rather than assuming one:
+
+1. **Run it yourself** — paste it into Claude research or parallel.ai, and act
+   on the answer in your own repo.
+2. **Send it upstream** — open an issue on `anvil-skills` from the research
+   issue template. The template is the entire contribution infrastructure;
+   there is no submission endpoint, no telemetry, and nothing leaves the repo
+   unless a human pastes it.
+
+Upstream is the interesting one. It is the only path by which evidence from a
+repo the author will never see reaches the routing table in §5, and it costs a
+GitHub issue template to build.
+
+**When it is worth running.** `unrouted.md` past the count §4.7 names, or the
+same fingerprint parked repeatedly across tickets. Running it against an empty
+pile produces a question with no evidence behind it, which is the same error as
+seeding a `process/*.md` from a guess (§4.5).
+
+**`/research`'s justification**, in the same shape as `/build`'s (§4.8). It
+earns its place if the prompts it emits are acted on — run by the user, or
+opened as an issue here. If none ever is, `/research` is a skill description
+charged to every session for nothing and it should be deleted rather than kept
+for tidiness.
+
+---
+
 ## 5. Categories and routing
 
 `category` is the field `/feedback` routes on. The set is closed. If a
@@ -940,6 +1041,15 @@ That asymmetry is deliberate. `CLAUDE.md` is read by every tool in the repo and
 owned by the people working in it. Anvil earning the right to _suggest_ a line
 after three independent sightings is reasonable; anvil silently editing the
 file every session reads from is not.
+
+**The one thing that closes an `open` proposal is the line turning up in
+`CLAUDE.md`.** That is the human's acceptance, on disk, and it is the only
+evidence of acceptance anvil ever gets — nobody comes back to tell `/feedback`
+what they decided. When the staleness pass sees it (§6, trigger 2) it removes
+the now-duplicated anvil-side line and flips the proposal to `promoted` in the
+same pass. The rule above is unchanged: anvil does not mark a proposal
+`promoted` on its own say-so, it marks one `promoted` on seeing the accepted
+line.
 
 ---
 
@@ -983,6 +1093,97 @@ the only point in the system where someone is forced to say which of two
 constraints actually matters.
 
 That is a question worth stopping for, and stopping is the whole feature.
+
+### The staleness pass
+
+Budget pressure is not the only reason a line should leave a context file. It is
+just the only one that announces itself. A line that has quietly stopped earning
+its place is charged to every run of its command forever, and nothing about a
+full file is what makes that wrong.
+
+So `/feedback` runs a staleness pass on **every** run, not only when a file is
+at its ceiling. Three triggers, and they do not have the same authority.
+
+**Trigger 1 — budget pressure.** Unchanged, and specified by steps 1–4 above.
+One-in-one-out at the ceiling, the evicted line named and justified, hard fail
+when nothing existing is weaker than the new line.
+
+**Trigger 2 — duplication.** `/feedback` reads the repo's `CLAUDE.md` and checks
+whether the substance of any context-file line now appears there. If it does,
+the anvil-side line is **removed automatically** and the removal logged.
+
+Nothing is lost when this fires: the constraint still holds, it is just stated
+once instead of twice. This is the exact case a `claude-md` proposal creates —
+the proposal is accepted, the human adds the line to `CLAUDE.md`, and the
+`process/*.md` or `REVIEW_RULES.md` line that generated it is still sitting
+there being paid for on every run of its command. Two statements of one
+constraint is also how the two drift apart, which is the failure §4.10 deleted
+an entire file to avoid.
+
+> **When trigger 2 fires on a line whose fingerprint has an open `claude-md`
+> proposal, that proposal flips to `promoted` in the same pass.**
+
+Without that, the two halves of the same event never meet. §5 leaves a
+`claude-md` proposal `open` because anvil cannot tell whether the human accepted
+it — but a line appearing in `CLAUDE.md` **is** the human having accepted it,
+observed rather than assumed. Left un-flipped, the proposal stays `open`
+forever and `/feedback` re-proposes it on the next run against a `CLAUDE.md`
+that already contains it, while the line it came from has just been removed.
+Flipping it in the same pass is not anvil marking its own homework; it is anvil
+recording a decision it can see was made.
+
+The rule is stated in terms of the fingerprint rather than of run order, which
+is why nothing else here specifies an ordering. The removal and the flip are two
+effects of one fingerprint match, applied in one pass.
+
+**Trigger 3 — obsolescence.** A line promoted more than `stale_after` tickets
+ago whose fingerprint has not been seen since is **presented for review**, and
+never removed automatically. `/feedback` names the line, says when it was
+promoted and how long since the fingerprint last appeared, and stops there. The
+user drops it or keeps it.
+
+`stale_after` resolves the same way every other number in this document does:
+from `BUDGETS.md` if the project set one, from the §4.2 default of **20**
+otherwise. It is a shipped guess and a project may override it — a repo moving
+fast enough to want the question after five tickets should not wait twenty for
+it.
+
+**The asymmetry between 2 and 3 is deliberate.** Duplication is provable —
+`/feedback` reads the context file and `CLAUDE.md` and sees the same constraint
+stated twice — and being wrong about it costs nothing, because the constraint
+survives either way.
+Obsolescence is a judgment call, and the evidence for it is an absence. A
+fingerprint going quiet has two readings that look identical in the logs: the
+lesson is dead weight because Claude is now good enough at that pattern, or the
+line is working and the silence is the line doing its job. The second is common
+and a tool cannot tell it from the first. Removing on that guess would be the
+same error as seeding a file from a guess (§4.5) — a change to what every run of
+a command sees, made on evidence that does not support it.
+
+**Age comes from the logs, not from the files.** Do not date-stamp lines in
+context files, and do not build citation tracking. Both are the obvious answer
+and both are wrong: a date stamp spends budget on metadata in a file whose whole
+constraint is line count, and citation tracking is machinery for a question
+already answered elsewhere.
+
+Every promoted line has at least one log entry behind it carrying `ts`, `ticket`
+and `status: promoted` (§4.6). `/feedback` already reads both logs in full on
+every run, so it reconstructs when a line was promoted and when its fingerprint
+was last seen at **zero additional cost** to anything read at runtime. The
+context files stay pure constraint. The logs already hold the history.
+
+**Every removal is logged.** Triggers 2 and 3 append to `self.jsonl` exactly as
+trigger 1 does under step 3 — an entry with `command: "feedback"` and
+`category: "unrouted"`, carrying the removed text and naming which trigger
+fired. A trigger-3 removal is logged when the user accepts it, not when it is
+presented.
+
+This is what makes "no feedback is lost" true, and it is worth being precise
+about which half of the system the claim applies to: **the context files are a
+cache and the logs are the permanent record.** A line leaving a context file is
+a line no longer being paid for on every run. It is not a line deleted from the
+system, and anything evicted can be found, re-argued and re-promoted from the
+log it was written to.
 
 ---
 

@@ -25,7 +25,7 @@ says otherwise — anvil is dogfooded on itself from M0. That directory ships
 with the plugin; see `FILE_CONTRACT.md` §8 for why, and for the two conditions
 that make it safe.
 
-All seven are `skills/<name>/SKILL.md` with `disable-model-invocation: true`,
+All eight are `skills/<name>/SKILL.md` with `disable-model-invocation: true`,
 not `commands/`. Every `.anvil/` path inside them is written
 `${CLAUDE_PROJECT_DIR}/.anvil/...`.
 
@@ -93,19 +93,44 @@ judgment about scoping and sizing, and that judgment lands in the logs like
 everything else. Two writers to the same context file is how the file becomes
 a landfill.
 
+`/research` sits off this diagram deliberately. It reads the same logs and the
+same `unrouted.md`, and writes nothing at all — see `FILE_CONTRACT.md` §4.11.
+Adding an eighth skill that reads the evidence base costs the one-writer
+invariant nothing, because it is not a writer.
+
 ---
 
-## Cut from v1
+## `/research` — cut, then restored
 
-**`/research`.** It was specified as "generates a prompt to improve the process
-itself", which is `/feedback`'s output under a different name. The narrower
-version — read the logs, find patterns `/feedback` could not route, emit a
-research prompt — cannot be designed before there is evidence of what
-`/feedback` actually fails to route. `unrouted.md` is that evidence, and it does
-not exist yet. Revisit after M3 if the pile is real.
+Recorded rather than quietly reversed, because the distinction that brings it
+back is the entire justification for the skill.
 
-Final v1 command set: `/setup`, `/scope`, `/kickoff`, `/build`, `/verify`,
-`/review`, `/feedback`.
+**Why it was cut.** It was specified as "generates a prompt to improve the
+process itself", which is `/feedback`'s output under a different name. That
+reasoning was sound and it applied to a different feature that happened to share
+the name.
+
+**Why it is back.** What `/research` actually is:
+
+> `/feedback` improves **this** repo's files from **this** repo's evidence.
+> `/research` turns unresolved patterns into a question for **outside**
+> investigation, and is the channel by which anvil learns from repos its author
+> will never see.
+
+That is not `/feedback` under a different name. It is the only path by which
+evidence from someone else's repo reaches this one's routing table, and it costs
+a GitHub issue template to build — the prompt it emits is either run by the user
+on Claude research or parallel.ai, or opened as an issue here. No submission
+endpoint, no telemetry, no infrastructure.
+
+**Where it lands.** Scoped at **M3**, which is the first point `unrouted.md`
+holds real content and therefore the first point the skill can be designed
+against evidence rather than imagination. Built at **M7** with packaging,
+because a contribution channel only matters once people can install the thing.
+The kill criterion is unchanged in spirit and stated at the end of this file.
+
+Final v1 command set, **eight**: `/setup`, `/scope`, `/kickoff`, `/build`,
+`/verify`, `/review`, `/feedback`, `/research`.
 
 ---
 
@@ -201,7 +226,7 @@ Tree B — .anvil/
   the test that matters most in M1 and it cannot be done by reading the file.
 - **Always-on cost.** `claude plugin details anvil-skills` shows zero always-on
   tokens beyond the skill description. Establishes the baseline the remaining
-  six skills are measured against.
+  seven skills are measured against.
 - Produces `.anvil/tickets/NNNN-slug/TICKET.md` with numbered, observable
   acceptance criteria, inside budget.
 - **The gate holds.** It stops and asks for approval, and does not write
@@ -247,7 +272,8 @@ Tree A — anvil-skills/
 Tree B — .anvil/
   feedback/unrouted.md          changed — first real parked entries
   process/scope.md              changed — from M1's real corrections
-  BUDGETS.md                    created only for test 2 below, then removed
+  BUDGETS.md                    created only for the override and trigger 3
+                                tests below, then removed
 ```
 
 M2 carries two things, not one: the compounding loop, and budget resolution.
@@ -265,9 +291,39 @@ both land here or nowhere.
   one in `self.jsonl` is two, and promotes. Tested with a real pair, because
   this is the rule the two-file split exists to protect.
 - Enforces one-in-one-out: at the limit it names the evicted line, justifies
-  the swap, and appends the evicted text back to `self.jsonl`.
+  the swap, and appends the evicted text back to `self.jsonl`. That is trigger 1
+  of the staleness pass (`FILE_CONTRACT.md` §6); the other two land here too.
+- **Staleness pass, trigger 2 — duplication.** Put a line in `process/scope.md`
+  and the same constraint in this repo's `CLAUDE.md` — create one if absent;
+  §0's note that it does not load for *users* does not affect this test, which
+  is about `/feedback` reading a file, not about context loading. `/feedback` removes the
+  anvil-side line automatically and appends the removed text to `self.jsonl`
+  naming the trigger. It leaves `CLAUDE.md` untouched — verified by diffing it
+  to nothing. Runs on a file that is nowhere near its ceiling, since the whole
+  point is that this trigger is not budget-driven.
+- **Staleness pass, trigger 3 — obsolescence — presents and never removes.**
+  Nothing in this repo is 20 tickets old at M2, so reach the condition by
+  lowering the threshold rather than by ageing anything: set `stale_after` to a
+  number this repo's history can actually satisfy in the same temporary
+  `BUDGETS.md` the override test uses. That exercises the new key and the
+  trigger in one run. Confirm `/feedback` names the line, states how long the
+  fingerprint has been quiet, and **leaves the file unchanged**. A trigger 3
+  that removes anything on its own is the failure to catch, and it is cheaper to
+  catch now than after twenty real tickets.
+
+  If M2's history is too short even for `stale_after: 1`, fall back to forging —
+  hand-edit a log entry's `ts` and `ticket` to fake the age — and **delete the
+  forged entry the moment the test passes.** M0's definition of done says the
+  entries are corrections actually given, and `FILE_CONTRACT.md` §8 ships this
+  repo's logs to users as the honest evidence for anvil's central claim. A
+  forged line left in place makes both of those false, and it would be
+  indistinguishable from a real one to everybody who reads it afterwards.
+  Prefer the threshold; it leaves nothing behind to clean up.
+- **Age is read from the logs.** No context file gains a date stamp, a
+  promotion marker, or a citation count. Checkable by eye and by `wc -l`: the
+  line counts after a staleness pass move down or stay level, never up.
 - **Idempotence test.** Two consecutive runs — the second changes nothing and
-  promotes nothing.
+  promotes nothing, including removing nothing a staleness pass already removed.
 - Prints the `unrouted.md` count on exit.
 
 **Definition of done — budget resolution.** Three tests, because the mechanism,
@@ -280,8 +336,10 @@ the number, and who may change the number are three separate things.
    this test must not create a `BUDGETS.md`.
 2. **Override resolution.** Add a `BUDGETS.md` setting `review_rules: 45`.
    `/feedback` must now enforce 45, not 30 — the same file that failed in test 1
-   accepts lines up to the new ceiling and fails at it. Remove the file
-   afterwards; the repo's real state is defaults.
+   accepts lines up to the new ceiling and fails at it. The same file carries
+   the lowered `stale_after` the trigger 3 test needs, which is the one key here
+   that is not a line count. Remove the file afterwards; the repo's real state
+   is defaults.
 3. **No self-raise.** On the hard failure from test 1, `/feedback` presents
    *both* ways out — evict a specific named line, or raise the budget in
    `BUDGETS.md` — and does neither. Checked as an **absence assertion**, since
@@ -291,17 +349,19 @@ the number, and who may change the number are three separate things.
    report. This is the rule most likely to be quietly violated, because raising
    the number is always the locally helpful move.
 
-**Risk retired.** Two risks. That the compounding loop is a nice diagram rather
-than a working mechanism — everything after M2 depends on the loop being real,
-which is why it is built second rather than last. And that budgets stated in a
+**Risk retired.** Three risks. That the compounding loop is a nice diagram
+rather than a working mechanism — everything after M2 depends on the loop being
+real, which is why it is built second rather than last. That budgets stated in a
 document are budgets in practice: that the ceiling binds, that a project can
-move it, and that the tool cannot move it for itself.
+move it, and that the tool cannot move it for itself. And that lines only ever
+enter context files — a loop with promotion and no removal is an accumulator,
+and it is cheapest to find that out before six milestones of promotions.
 
 ---
 
 ## M3 — Dogfood
 
-**Goal.** Use `/scope` and `/feedback` to specify the four remaining commands.
+**Goal.** Use `/scope` and `/feedback` to specify the six remaining commands.
 The remaining commands are not hand-written; they are scoped by the tool.
 
 **Files created or changed.**
@@ -316,6 +376,7 @@ Tree B — .anvil/
   tickets/0004-verify-skill/TICKET.md       via /scope
   tickets/0005-review-skill/TICKET.md       via /scope
   tickets/0006-setup-skill/TICKET.md        via /scope
+  tickets/0007-research-skill/TICKET.md     via /scope — built at M7
   process/scope.md                          changed via /feedback
   REVIEW_RULES.md                           changed via /feedback
   feedback/unrouted.md                      changed via /feedback
@@ -323,7 +384,7 @@ Tree B — .anvil/
 
 **Definition of done.**
 
-- Five tickets, all produced by `/scope`, none hand-authored. A ticket rewritten
+- Six tickets, all produced by `/scope`, none hand-authored. A ticket rewritten
   by hand afterwards is a `/scope` bug and gets logged as one.
 - At least one change to `FILE_CONTRACT.md` traceable to a specific feedback-log
   entry id. If five real runs produce no contract change, the contract was
@@ -331,12 +392,16 @@ Tree B — .anvil/
   check.
 - `unrouted.md` is non-empty and has been read. Decide, explicitly, whether it
   justifies a new category or whether the entries are noise.
-- `/research` decision made: revive narrowly, or stay cut.
+- **`/research` scoped, not built.** `0007-research-skill` is scoped here
+  because M3 is the first point `unrouted.md` holds the evidence the skill is
+  designed against — the real parked entries name what an outside question would
+  have to be about. The ticket then waits for M7. Scoping it against an empty
+  pile would be the mistake that got it cut the first time.
 
 **Risk retired.** That the process works on toy input and collapses on real
 input, and that commands specced by hand quietly diverge from what `/scope`
 would actually produce. This is the milestone that catches a broken workflow
-before four more commands are built on top of it.
+before six more commands are built on top of it.
 
 ---
 
@@ -487,7 +552,7 @@ context files and the one-writer invariant quietly dies.
 
 ---
 
-## M7 — `/setup` and packaging
+## M7 — `/setup`, `/research` and packaging
 
 **Subject repos: `dodgeball` for fresh generation, `site` for the update path.**
 
@@ -495,9 +560,14 @@ context files and the one-writer invariant quietly dies.
 safely for one that has. Built last, deliberately: by now the format has
 survived six milestones of real use and has stopped moving.
 
+`/research` is built here for a different reason. It is not blocked on the
+format — it writes nothing — but it is a contribution channel, and a
+contribution channel is worthless until people can install the thing and have
+something to contribute from. It ships with the package or it ships to nobody.
+
 **If anvil is published before M7**, a crude `/setup` ships anyway — one that
 only asks the `CONFIG.md`, `CRITICAL_PATHS.md` and `REVIEW_RULES.md` questions
-and writes the answers verbatim, with no detection. Six skills that all refuse to run without `.anvil/`
+and writes the answers verbatim, with no detection. Seven skills that all refuse to run without `.anvil/`
 is not a release. M7 then upgrades that placeholder rather than introducing the
 skill, and the format-freeze check below applies to the upgrade.
 
@@ -506,9 +576,11 @@ skill, and the format-freeze check below applies to the upgrade.
 ```
 Tree A — anvil-skills/
   skills/setup/SKILL.md         new
+  skills/research/SKILL.md      new — from M3's ticket 0007
+  .github/ISSUE_TEMPLATE/       new — the research-prompt issue template
   hooks/                        new, only if a real need survived M0–M6
   .claude-plugin/marketplace.json  changed — finalised
-  .claude-plugin/plugin.json    changed — all 7 skills registered
+  .claude-plugin/plugin.json    changed — all 8 skills registered
   README.md                     changed — install, first run, .anvil/ note
   docs/PHILOSOPHY.md            changed — final
 
@@ -541,8 +613,9 @@ rather than writing it twice; the new work is the question set for `CONFIG.md`,
   Human-written lines in `REVIEW_RULES.md` and `CRITICAL_PATHS.md` survive, and
   lines promoted by `/feedback` over three milestones survive. Verified by re-running
   and diffing to nothing.
-- **Cold install.** In a repo with no `.anvil/`, every one of the other six
-  skills stops and points at `/setup`. None of them creates a file, guesses a
+- **Cold install.** In a repo with no `.anvil/`, every one of the other seven
+  skills stops and points at `/setup` — `/research` included, since its inputs
+  live under `.anvil/` too. None of them creates a file, guesses a
   `CONFIG.md`, or proceeds on defaults.
 - **`process/*.md` ship title-only.** All five contain their title line and
   nothing else. `/setup` seeds from what the user tells it, never from what
@@ -557,10 +630,19 @@ rather than writing it twice; the new work is the question set for `CONFIG.md`,
   rather than filled with a plausible default.
 - **Format-freeze check.** No change to `FILE_CONTRACT.md` during M4–M6 that
   `/setup` does not implement. Walk the contract file by file and confirm.
+- **`/research` writes nothing.** Run it with the whole of `.anvil/`
+  write-protected and confirm it completes and emits its prompt. It reads
+  `unrouted.md` and both logs, and produces a research question quoting the
+  `fb-NNNN` ids behind it — no context file, no ticket, no log entry. Same shape
+  of check as M6's for `/review`, and for the same invariant.
+- **The upstream path works end to end.** Take the prompt `/research` emits and
+  open an issue on this repo from the template, by hand. If the template needs a
+  field the prompt does not produce, that is a finding about `/research`'s output
+  format, not about the template.
 - Plugin installs cleanly from `marketplace.json` into a clean Claude Code
-  install, and all seven skills appear as `/name`.
+  install, and all eight skills appear as `/name`.
 - **Final cost gate.** `claude plugin details anvil-skills` still shows zero
-  always-on tokens beyond the seven skill descriptions, with all seven shipped.
+  always-on tokens beyond the eight skill descriptions, with all eight shipped.
   If it has crept up, guidance leaked out of a skill body into something
   always-loaded.
 - Any guidance anvil ships lives inside a skill. A `CLAUDE.md` at this repo's
@@ -580,7 +662,7 @@ by care.
 |---|---|
 | M0 | Schema designed against imagined corrections rather than real ones |
 | M1 | Approval gates that do not hold; skills that cannot start cold; bare `.anvil/` paths reading the plugin cache instead of the user's repo |
-| M2 | A compounding loop that is a diagram rather than a mechanism; budgets that are advisory in practice; a ceiling the tool can raise for itself |
+| M2 | A compounding loop that is a diagram rather than a mechanism; budgets that are advisory in practice; a ceiling the tool can raise for itself; context files that only ever grow |
 | M3 | A process that works on toy input and collapses on real input |
 | M4 | Plan files too thin to build from or too fat to read; `/build` existing without a reason; a contract validated only against a repo with nothing to build |
 | M5 | MCP dependency breaking any-repo portability; `/verify` drifting subjective |
@@ -594,8 +676,14 @@ Stated up front, so they are decisions rather than sunk-cost arguments later.
 - **`/build`** — deleted if the feedback logs hold no entries with
   `command: "build"` across three consecutive tickets, or if none of them ever
   routes to another skill's context file (decided end of M4).
-- **`/research`** — stays cut unless `unrouted.md` shows a real pattern
-  `/feedback` cannot route (decided end of M3).
+- **`/research`** — restored to v1, but the original criterion still binds and
+  is now a gate rather than a revival test: it is scoped at M3 only if
+  `unrouted.md` shows a real pattern `/feedback` cannot route. An empty or
+  noise-only pile at end of M3 means the ticket is not written and the command
+  set returns to seven. If it is scoped and built, it is deleted if no prompt it
+  emits is ever acted on — run or sent upstream — because a channel nobody uses
+  is a skill description charged to every session for nothing (decided end of
+  M3, reviewed at M7).
 - **Any `process/*.md`** — housekeeping, not a rule. A file still empty after a
   dozen or so tickets is evidence that command does not need one; delete it
   then. It costs nothing while empty, so there is no deadline. Matches
