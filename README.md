@@ -15,6 +15,15 @@ and Claude later hit on its own counts as two sightings, not one each, which
 makes it the best-evidenced kind of lesson in the system rather than the kind
 that falls through the gap.
 
+**Nothing is lost from the logs. Things are lost from the context files, on
+purpose.** The two logs are append-only and permanent — a correction you gave is
+still recoverable long after it stopped mattering. The `.anvil/` context files
+are a distillation of them under hard line budgets, so a line is evicted when
+something beats it, when the same constraint turns up in your `CLAUDE.md`, or
+when it has gone quiet for long enough that you agree to drop it. That eviction
+is lossy by design: the log still holds the line, and the file's job is to stay
+small enough to be worth reading on every run.
+
 ## Status
 
 Pre-alpha. Nothing is built and nothing is installable yet. Currently at M0.
