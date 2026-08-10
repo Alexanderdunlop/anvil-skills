@@ -11,6 +11,22 @@ used in anger first.
 
 ---
 
+## Progress
+
+| M     | State       | What it produced                                                    |
+| ----- | ----------- | ------------------------------------------------------------------- |
+| M0    | done        | contract, entry format, 8 hand-written entries, manifests validate   |
+| M1    | done        | `/scope`, and eight written checks that all pass on the installed plugin |
+| M2    | next        | `/feedback` — the compounding loop, and budget resolution            |
+| M3–M7 | not started | —                                                                    |
+
+M1 changed the contract twice, which is the milestone working as intended:
+`/scope` may now read one prior ticket the user names (§3), and the `fingerprint`
+field grew a warning about prose keys (§4.6). Both came from running the command,
+not from reading it — see `evals/README.md` for the checks that caught them.
+
+---
+
 ## Reading the file lists
 
 Every milestone below lists files in two trees, always labelled. Confusing them
@@ -249,11 +265,19 @@ Tree B — .anvil/
   `claude plugin eval` exists and is substantial — it takes
   `evals/**/case.yaml`, runs a no-plugin ablation arm, supports LLM graders and
   a `scaffold_script`, which is what makes the cross-repo path test above
-  automatable. It is **absent from the published CLI reference**, so treat the
-  case schema as unstable: pin the Claude Code version in the README, and if the
-  format shifts, the fallback is a written manual re-test script in
+  automatable.
+
+  **Resolved at M1: it is in the CLI, and it is early access.** An earlier draft
+  of this line said it was absent from the published reference; that was wrong
+  and is corrected here rather than deleted. What actually blocks it is
+  entitlement — `claude plugin eval init` refuses with "currently in early
+  access" on this account, so the case schema cannot be run and therefore cannot
+  be checked. Writing a `case.yaml` against a schema nothing here can execute is
+  a spec designed against imagination, which is the failure M0 exists to
+  prevent. The fallback this milestone allows was taken: eight written checks in
   `evals/README.md`. The definition of done is "the gate holds, and the check is
-  repeatable" — `eval` is the preferred mechanism, not the requirement.
+  repeatable" — `eval` is the preferred mechanism, not the requirement. Convert
+  checks 3 and 4 first when access opens.
 - Every correction given during the run is appended to `human.jsonl` *before the
   command exits*. `/clear` between commands means an unflushed entry is a lost
   entry.

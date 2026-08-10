@@ -26,7 +26,13 @@ small enough to be worth reading on every run.
 
 ## Status
 
-Pre-alpha. Nothing is built and nothing is installable yet. Currently at M0.
+Pre-alpha. One of the eight commands exists.
+
+M0 and M1 are done: the file contract and the feedback entry format were
+hand-authored from real corrections, and `/scope` is built and verified against
+the installed plugin rather than the working tree. It installs from a local
+marketplace and is published nowhere. `/feedback` is next, and until it exists
+nothing is distilled and nothing compounds — the logs just accumulate.
 
 ## Docs
 
@@ -35,8 +41,19 @@ Pre-alpha. Nothing is built and nothing is installable yet. Currently at M0.
 - [docs/FILE_CONTRACT.md](docs/FILE_CONTRACT.md) — the file format and its rules
 - [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) — why context is treated as a tax, and
   why the budgets are hard
+- [evals/README.md](evals/README.md) — how each command is re-tested, and the
+  ways those checks have already misled someone
 
 ## This repo's own `.anvil/`
 
-Once M0 lands, this repo will ship a `.anvil/` directory deliberately, as its
-real working history; it is never read when anvil runs in another repo.
+This repo ships a `.anvil/` directory deliberately, as its real working history.
+It is never read when anvil runs in another repo: every path in every skill is
+`${CLAUDE_PROJECT_DIR}/.anvil/...`, which resolves to the repo you are working
+in rather than to the plugin's copy of this one.
+
+That matters more than it sounds. Marketplace plugins are copied into
+`~/.claude/plugins/cache/`, so this repo's `.anvil/` lands on every user's
+machine, and a bare relative path would be ambiguous between two real `.anvil/`
+trees on disk — with the wrong one holding a perfectly valid-looking
+`CONFIG.md`. The check that this holds runs against the installed plugin in a
+different repo, because reading the file cannot prove it.

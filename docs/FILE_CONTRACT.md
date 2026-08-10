@@ -674,6 +674,20 @@ never conflict. The schema below is **identical in both files**.
 | `proposed_line` | string \| null | the one-line constraint this would become                  |
 | `status`        | string         | `open` \| `promoted` \| `parked` \| `dropped`              |
 
+**`fingerprint` is kebab-case, and this is load-bearing.** Sightings are counted
+by exact string match, so a fingerprint written as a prose sentence never
+matches its own second sighting. The entry is still well-formed, still routes to
+the right file, and still shows up in the logs — it simply can never reach the
+threshold in §5, so the lesson is never promoted and the loop silently does
+nothing while looking healthy.
+
+Observed at M1, and worth recording as a format failure rather than a model one:
+the skill's field description said "kebab key" and the example directly under it
+was written in prose, so the run followed the example. Anything generating these
+entries states the constraint and shows a kebab example, or it will reproduce
+this. `ac-written-as-implementation`, not "acceptance criteria written as
+implementation steps".
+
 **Ids are one sequence, not two.** `fb-NNNN` is monotonic across both files —
 the next id is `max(both) + 1`. Two per-file sequences would collide, and
 `unrouted.md` (§4.7) references entries by id while drawing from both files, so
