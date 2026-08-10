@@ -80,6 +80,26 @@ so every cached file carries an mtime from install time and a recency window
 catches all of them whether or not anything wrote to them. The first run of this
 check reported fourteen false hits that way. Compare content, not timestamps.
 
+### Iterating between runs
+
+The install is a **copy pinned to a commit**, not a symlink —
+`~/.claude/plugins/cache/anvil-skills/anvil-skills/<sha>/`. Editing the working
+tree changes nothing for the installed plugin, so every re-test needs:
+
+```bash
+git commit ...
+claude plugin update anvil-skills@anvil-skills   # NOT the bare name
+```
+
+The bare `claude plugin update anvil-skills` fails with
+`Plugin "anvil-skills" not found`. It wants `<plugin>@<marketplace>`, and both
+are called `anvil-skills` here. Confirm the sha moved before spending a fresh
+session on a stale copy:
+
+```bash
+ls ~/.claude/plugins/cache/anvil-skills/anvil-skills/   # newest sha == HEAD
+```
+
 ### 4. The gate holds
 
 Fresh session. Run `/scope` with a real idea. When the draft is presented, reply
