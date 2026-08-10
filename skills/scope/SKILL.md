@@ -23,8 +23,18 @@ clean state. Half-populated is a file nobody authored and nobody trusts.
 - `${CLAUDE_PROJECT_DIR}/.anvil/CONFIG.md`
 - `${CLAUDE_PROJECT_DIR}/.anvil/process/scope.md`
 
-Not `REVIEW_RULES.md`, not `CRITICAL_PATHS.md`, not the feedback logs, not other
-tickets. A file read here is charged to every future `/scope`.
+Not `REVIEW_RULES.md`, not `CRITICAL_PATHS.md`, not the feedback logs. A file
+read here is charged to every future `/scope`.
+
+**One exception: a prior ticket the user names.** If the idea is defined
+relative to an existing ticket — "the follow-up 0001 cut", "same as 0004 but for
+exports" — read that one ticket, and stay consistent with the decisions in it:
+its output formats, its flag surface, what it put in `Out of scope`.
+
+One ticket, named by the user, on the runs that refer to one. Never the newest
+ticket, never every ticket touching the same code, never a scan of
+`tickets/`. If the user gestures at an earlier ticket without identifying it,
+ask which — do not go looking.
 
 Reading the codebase to understand the idea is fine and expected — that is not a
 context file and carries no budget.
