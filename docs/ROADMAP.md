@@ -29,6 +29,13 @@ All eight are `skills/<name>/SKILL.md` with `disable-model-invocation: true`,
 not `commands/`. Every `.anvil/` path inside them is written
 `${CLAUDE_PROJECT_DIR}/.anvil/...`.
 
+**Skills are discovered, not declared.** A `skills/<name>/SKILL.md` loads because
+the directory exists. `plugin.json` names no component paths, so adding a skill
+changes no manifest — which is why no milestone below lists `plugin.json` as
+changed for adding one. Listing skills explicitly would *replace* the default
+directory scan rather than supplement it, buying nothing but a manifest that lags
+the tree by one edit, and a hard validation error for every path not yet created.
+
 ---
 
 ## Dogfooding targets
@@ -177,6 +184,11 @@ Written down so M1 does not inherit four missing files nobody planned for.
 - Five feedback entries exist, drawn from corrections actually given in past
   sessions — not invented to fit the schema.
 - `claude plugin validate .` passes on the manifests, before any skill exists.
+  **This is a well-formedness check and nothing more.** Skills are discovered
+  from `skills/<name>/SKILL.md` rather than declared in the manifest, so nothing
+  at M0 verifies that a skill will actually load. Wiring is first checked at M1,
+  by the local-marketplace install M1 already needs for the path rule — so the
+  weaker M0 gate costs nothing, it just must not be read as more than it is.
 - Each of the five is hand-routed to a destination file without adding a field
   to the entry format. If a field has to be added, the format was wrong and M0
   is not done.
@@ -208,7 +220,6 @@ Tree A — anvil-skills/
   skills/scope/SKILL.md         new — disable-model-invocation: true
   evals/scope-gate/case.yaml    new — the gate-holds case
   docs/FILE_CONTRACT.md         changed if the format bends under use
-  .claude-plugin/plugin.json    changed
 
 Tree B — .anvil/
   process/scope.md              changed — real lines, from real runs
@@ -267,7 +278,6 @@ intentions.
 ```
 Tree A — anvil-skills/
   skills/feedback/SKILL.md      new — admission test inlined verbatim
-  .claude-plugin/plugin.json    changed
 
 Tree B — .anvil/
   feedback/unrouted.md          changed — first real parked entries
@@ -420,7 +430,6 @@ plan files are actually enough to work from.
 Tree A — anvil-skills/
   skills/kickoff/SKILL.md       new
   skills/build/SKILL.md         new
-  .claude-plugin/plugin.json    changed
 
 Tree B — .anvil/
   process/kickoff.md            new
@@ -580,7 +589,7 @@ Tree A — anvil-skills/
   .github/ISSUE_TEMPLATE/       new — the research-prompt issue template
   hooks/                        new, only if a real need survived M0–M6
   .claude-plugin/marketplace.json  changed — finalised
-  .claude-plugin/plugin.json    changed — all 8 skills registered
+  .claude-plugin/plugin.json    changed — version decision only, see below
   README.md                     changed — install, first run, .anvil/ note
   docs/PHILOSOPHY.md            changed — final
 
@@ -640,7 +649,21 @@ rather than writing it twice; the new work is the question set for `CONFIG.md`,
   field the prompt does not produce, that is a finding about `/research`'s output
   format, not about the template.
 - Plugin installs cleanly from `marketplace.json` into a clean Claude Code
-  install, and all eight skills appear as `/name`.
+  install, and all eight skills are **discovered** from `skills/` and appear as
+  `/name`. This install is the only check that skill wiring works — the manifest
+  declares no skills, so `claude plugin validate` never could be.
+- **Version decision.** `version` is unset from M0 through M6, so the git SHA is
+  the version and users move on every commit. That is right while the format is
+  still moving, and it stops being right the moment people install it and would
+  rather move when you say so. M7 decides whether to pin a semver.
+
+  One cost either way, recorded so the decision is made with it in view:
+  `claude plugin validate . --strict` **cannot pass while `version` is unset** —
+  the missing-version warning is its only diagnostic, and `--strict` treats
+  warnings as errors. So strict validation is unavailable as a CI gate until
+  this is settled. `claude plugin tag` also wants a `plugin.json` version that
+  agrees with the enclosing marketplace entry, which is a second reason the
+  question lands here rather than earlier.
 - **Final cost gate.** `claude plugin details anvil-skills` still shows zero
   always-on tokens beyond the eight skill descriptions, with all eight shipped.
   If it has crept up, guidance leaked out of a skill body into something

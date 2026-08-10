@@ -1,0 +1,20 @@
+{
+  "name": "anvil-skills",
+  "displayName": "Anvil Skills",
+  "description": "Claude Code skills that learn from your corrections: scope, build, verify, then distil the feedback back into the context files so the next ticket goes better.",
+  "author": {
+    "name": "Alex Dunlop",
+    "url": "https://github.com/Alexanderdunlop"
+  },
+  "homepage": "https://github.com/Alexanderdunlop/anvil-skills",
+  "repository": "https://github.com/Alexanderdunlop/anvil-skills",
+  "license": "MIT",
+  "keywords": [
+    "claude-md",
+    "context-window",
+    "context-engineering",
+    "self-improving",
+    "spec-driven",
+    "pr-review"
+  ]
+}

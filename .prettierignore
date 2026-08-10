@@ -2,3 +2,7 @@
 # in its .jsonl examples, and pretty-printing them makes the document contradict
 # itself in the exact place someone copies from.
 docs/
+
+# Context files are budgeted in lines and checked with `wc -l`. A formatter that
+# rewraps one moves a number FILE_CONTRACT.md §6 treats as a hard ceiling.
+.anvil/

@@ -33,8 +33,8 @@ Pre-alpha. Nothing is built and nothing is installable yet. Currently at M0.
 - [docs/ORIGIN_IDEA.md](docs/ORIGIN_IDEA.md) — the original note this repo is based on
 - [docs/ROADMAP.md](docs/ROADMAP.md) — the milestones, M0 to M7
 - [docs/FILE_CONTRACT.md](docs/FILE_CONTRACT.md) — the file format and its rules
-- `docs/PHILOSOPHY.md` — why context is treated as a tax. Not written yet; it is
-  an M0 deliverable, and `FILE_CONTRACT.md` §1 points at it
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) — why context is treated as a tax, and
+  why the budgets are hard
 
 ## This repo's own `.anvil/`
 
