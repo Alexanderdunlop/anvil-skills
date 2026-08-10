@@ -1,0 +1,15 @@
+{
+  "name": "anvil-skills",
+  "description": "The anvil workflow for Claude Code: eight skills that scope, build, verify and review, and distil your corrections back into the context files they read.",
+  "owner": {
+    "name": "Alex Dunlop",
+    "url": "https://github.com/Alexanderdunlop"
+  },
+  "plugins": [
+    {
+      "name": "anvil-skills",
+      "source": "./",
+      "description": "Correct Claude once and it stays corrected. Every skill logs what you fixed and where it got stuck; /feedback distils those logs into context files under hard line budgets, so they stay small enough to be worth reading on every run."
+    }
+  ]
+}
