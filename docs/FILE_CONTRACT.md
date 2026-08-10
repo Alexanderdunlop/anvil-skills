@@ -239,7 +239,7 @@ which is why the numbers below are the shipped defaults rather than facts. The p
 
 | Command     | Files read                                                             | Lines      |
 | ----------- | ---------------------------------------------------------------------- | ---------- |
-| `/scope`    | CONFIG + process/scope                                                 | 30         |
+| `/scope`    | CONFIG + process/scope (+ one named prior ticket)                      | 30 (+40)   |
 | `/kickoff`  | CONFIG + process/kickoff + ticket body                                 | 70         |
 | `/build`    | CONFIG + process/build + CONTEXT + PLAN + TEST_CASES                   | 170        |
 | `/verify`   | CONFIG + process/verify + REVIEW_RULES + CRITICAL_PATHS + TEST_CASES   | 140        |
@@ -249,6 +249,20 @@ which is why the numbers below are the shipped defaults rather than facts. The p
 
 Every row dropped by 30–40 lines when `RULES.md` was deleted (§4.10). `/scope`,
 the command run most often and most casually, now costs 30 lines.
+
+**`/scope`'s one named prior ticket.** A ticket is very often defined as the
+follow-up an earlier ticket cut, and its `Out of scope` section names the
+decisions the new ticket has to stay consistent with — the output format, the
+flag surface, the boundary that was drawn. Forbidding that read makes `/scope`
+infer them from the codebase and get corrected on the answer that was already
+written down.
+
+The permission is deliberately narrow. **One ticket, named by the user, read
+only when the idea refers to it.** Not the newest ticket, not every ticket
+touching the same file, not a directory scan. That is the difference between
+resolving a stated reference and trawling the backlog, and only the second is
+the unbounded cost the budget exists to prevent. The `+40` is one `TICKET.md` at
+its §4.7 ceiling, and it is charged only on the runs that use it.
 
 `REVIEW_RULES.md` appears in exactly two rows. It is invisible to `/scope`,
 `/kickoff` and `/build`, which is the entire reason it is a separate file from
