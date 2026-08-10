@@ -167,8 +167,14 @@ either file plus one. Read both before you write either.
 evidence for what the table is missing, and inventing a key destroys it.
 
 `fingerprint` identifies the lesson so the same mistake in a different ticket
-matches. "acceptance criteria written as implementation steps" is a fingerprint;
-"wrong wording on ticket 12" is not.
+matches. **Short kebab-case, no spaces** — `ac-written-as-implementation` is a
+fingerprint; `wrong wording on ticket 12` is not, and neither is a prose
+sentence describing what happened.
+
+Matching is by exact string. A fingerprint written as prose never matches its
+own second sighting, so the lesson never reaches the threshold and never gets
+promoted — the failure is silent and looks like nothing was ever learned. Write
+the key you would want the *next* run to collide with.
 
 **Write these before the command exits.** `/clear` runs between commands, so an
 unflushed entry is a lost entry.

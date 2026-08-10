@@ -68,12 +68,17 @@ Run `/scope` there. Then:
 
 ```bash
 git -C /path/to/some-other-repo status --short   # the ticket is here
-find ~/.claude/plugins/cache -newermt '-10 minutes' -name '*.md' -path '*anvil*'
+diff -r ~/.claude/plugins/cache/anvil-skills/anvil-skills/*/.anvil .anvil
 ```
 
-The ticket, and any feedback entry, must land in the other repo. Nothing under
-`~/.claude/plugins/cache/` may be modified. A hit there is the bug this whole
-rule exists for.
+The ticket, and any feedback entry, must land in the other repo. The `diff` must
+print nothing: the cached copy of this repo's own `.anvil/` is still byte-for-byte
+what was installed. Any difference is the bug this whole rule exists for.
+
+**Do not check this with `find -newermt`.** The installer copies the whole tree,
+so every cached file carries an mtime from install time and a recency window
+catches all of them whether or not anything wrote to them. The first run of this
+check reported fourteen false hits that way. Compare content, not timestamps.
 
 ### 4. The gate holds
 
