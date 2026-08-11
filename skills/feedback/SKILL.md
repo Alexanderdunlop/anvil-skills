@@ -235,6 +235,10 @@ thing you may rewrite on an existing line.
   accepted `CLAUDE.md` line
 - `open` → `parked` — routed to `unrouted.md`
 - `open` → `dropped` — failed admission question 1
+- `parked` → `dropped` — the question has been answered, **and the user says so
+  in this run**. Remove the bullet from `unrouted.md`, log the removal like any
+  other, and name where it was answered. Never decide this yourself: a settled
+  question is a judgment about a document, not something visible in the logs
 - `open` stays `open` — below threshold, or a `claude-md` proposal awaiting a
   human
 
@@ -278,8 +282,12 @@ End every run with:
 - parked — count
 - **the `unrouted.md` count**, every run, even when it is zero
 
-Above ten unrouted entries, say that the category table needs review. That pile
-is the evidence for what the table is missing, not a rubbish bin.
+Count the bullets in the file, not the entries that ever carried
+`category: "unrouted"` — a question that has been answered and closed is not
+still open evidence.
+
+Above ten, say that the category table needs review. That pile is the evidence
+for what the table is missing, not a rubbish bin.
 
 ## 13. Never
 

@@ -18,7 +18,14 @@ used in anger first.
 | M0    | done        | contract, entry format, 8 hand-written entries, manifests validate   |
 | M1    | done        | `/scope`, and eight written checks that all pass on the installed plugin |
 | M2    | in progress | `/feedback` written, and thirteen written checks it has yet to pass   |
-| M3–M7 | not started | —                                                                    |
+| M3    | in progress | six tickets scoping the remaining commands, ids 0001–0006            |
+| M4–M7 | not started | —                                                                    |
+
+**The ticket numbering above was wrong and is corrected here.** This list ran
+0002–0007 on the assumption that an earlier milestone had minted 0001. None had
+— M1's live runs happened in another repo, so `.anvil/tickets/` was empty and
+`max(existing) + 1` is 0001. Numbering from 0002 would have meant skipping an id
+to protect a plan, which is the plan overriding the contract.
 
 **M2 is written, not verified.** The skill and its checks exist; every check that
 needs a live run against the installed plugin is still outstanding, and the
@@ -412,12 +419,12 @@ Tree A — anvil-skills/
   docs/FILE_CONTRACT.md                     changed — from log evidence
 
 Tree B — .anvil/
-  tickets/0002-kickoff-skill/TICKET.md      via /scope
-  tickets/0003-build-skill/TICKET.md        via /scope
-  tickets/0004-verify-skill/TICKET.md       via /scope
-  tickets/0005-review-skill/TICKET.md       via /scope
-  tickets/0006-setup-skill/TICKET.md        via /scope
-  tickets/0007-research-skill/TICKET.md     via /scope — built at M7
+  tickets/0001-kickoff-skill/TICKET.md      via /scope
+  tickets/0002-build-skill/TICKET.md        via /scope
+  tickets/0003-verify-skill/TICKET.md       via /scope
+  tickets/0004-review-skill/TICKET.md       via /scope
+  tickets/0005-setup-skill/TICKET.md        via /scope
+  tickets/0006-research-skill/TICKET.md     via /scope — built at M7
   process/scope.md                          changed via /feedback
   REVIEW_RULES.md                           changed via /feedback
   feedback/unrouted.md                      changed via /feedback
@@ -439,10 +446,43 @@ Tree B — .anvil/
   have to be about. The ticket then waits for M7. Scoping it against an empty
   pile would be the mistake that got it cut the first time.
 
+**The unrouted pile, read at M3. Decision: no new category.**
+
+Three entries. `fb-0007` and `fb-0008` were questions about the contract and both
+were answered at M2 in §4.6 — they were settled business still sitting in the
+pile, and noticing that is what produced the §4.7 change below. That leaves
+`fb-0003`, which argues for a `process:setup` key.
+
+Rejected, for now. Its lesson — seed only from what the user states — is already
+in §4's seeding rule, where `/setup`'s author reads it, so the entry is evidence
+that was absorbed rather than evidence of a missing route. And `/setup` runs
+about twice in a repo's life: a sixth `process/*.md` would be created, read and
+reasoned about by everyone in order to hold lessons for the command that runs
+least. Revisit after M7, when `/setup` has actually run and can produce evidence
+instead of an argument.
+
+**The contract change, and where it did not come from.** §4.7 gained a way to
+close a parked entry, traceable to `fb-0007` and `fb-0008`: nothing in the
+contract ever took a bullet out of `unrouted.md`, so the count printed on exit —
+the one signal that the category table is wrong — could only ever go up.
+
+It is worth being precise that this came from reading the pile, **not** from the
+six scoping runs. Those six produced no contract change at all, and the
+definition of done above says to assume the contract was not actually exercised
+rather than that it was exceptionally good. That is the right reading here: the
+six ran in one session against a context already saturated with this document,
+which is close to the opposite of the cold start the format is meant to survive.
+Treat the ticket format as unexercised until a run that has not just read the
+spec produces one.
+
 **Risk retired.** That the process works on toy input and collapses on real
 input, and that commands specced by hand quietly diverge from what `/scope`
 would actually produce. This is the milestone that catches a broken workflow
 before six more commands are built on top of it.
+
+Partly retired here. Six tickets exist and none was hand-written after the fact,
+but they were produced in one saturated session, so the divergence half of this
+risk is still open.
 
 ---
 
