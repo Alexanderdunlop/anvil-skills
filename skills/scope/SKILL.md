@@ -190,7 +190,7 @@ the key you would want the _next_ run to collide with.
 unflushed entry is a lost entry.
 
 **Edit no context file.** Not `process/scope.md`, not `CONFIG.md`, not any of
-them. `/feedback` is the only command that writes context files, and a second
+them. `/improve` is the only command that writes context files, and a second
 writer is how they turn into a landfill.
 
 ## 8. Start cold

@@ -117,7 +117,7 @@ nothing else. A `VERIFY.md` containing paragraphs is a bug.
 history. The history is in git.
 
 Nobody reads this file but humans. No skill loads it — not `/review`, not
-`/feedback` — so it is written for a reviewer opening the PR a week later, and
+`/improve` — so it is written for a reviewer opening the PR a week later, and
 that is the only audience to write for.
 
 ## 7. Produce no judgment
@@ -179,7 +179,7 @@ The category set is closed: `claude-md`, `config`, `path`, `review`,
 unflushed entry is a lost entry.
 
 **Edit no context file.** Not `CRITICAL_PATHS.md`, not `REVIEW_RULES.md`, not
-`process/verify.md`. `/feedback` is the only command that writes them, and a
+`process/verify.md`. `/improve` is the only command that writes them, and a
 `/verify` that adds its own critical path is the second writer that turns the
 file into a landfill.
 

@@ -160,12 +160,12 @@ feature.
 ## 7. Update mode — never an overwrite
 
 A repo with an existing `${CLAUDE_PROJECT_DIR}/.anvil/` has history in it: lines
-a human wrote, and lines `/feedback` promoted after two independent sightings.
+a human wrote, and lines `/improve` promoted after two independent sightings.
 Both are more valuable than anything you can generate.
 
 - **Change no existing line.** Not to reword it, not to reformat it, not to sort
   it.
-- **Remove nothing.** Removal is `/feedback`'s job and it has rules about it.
+- **Remove nothing.** Removal is `/improve`'s job and it has rules about it.
 - **Add only what the user asks for in this run.**
 - **Create only what is missing** — a `process/*.md` that does not exist yet,
   written title-only like any other.

@@ -1,308 +1,168 @@
 ---
 name: feedback
-description: Distil the feedback logs into the .anvil context files — promote on evidence, evict at the ceiling, and present what has gone stale.
+description: Capture what went wrong as feedback log entries — drafted from the conversation you just had, or from one you talk through, and written only once the user picks.
 disable-model-invocation: true
 ---
 
 # /feedback
 
-Raw log entries in, distilled context files out. This is the only command that
-edits a context file. Every other command appends to the logs and edits nothing.
+Feedback in, log entries out. This command writes to
+`${CLAUDE_PROJECT_DIR}/.anvil/feedback/` and nothing else.
+
+It exists because **the corrections that matter most are given outside a
+command**. Every anvil skill flushes what it saw during its own run, but most
+real feedback arrives in ordinary conversation — mid-task, after the fact, or as
+a complaint about how the whole thing went. Without this, that feedback lands in
+a session that ends, and nothing compounds from it.
+
+> **`/feedback` captures. `/improve` distils.** This command never touches a
+> context file, never promotes anything, and never applies a threshold.
 
 ## 1. Precondition
 
 If `${CLAUDE_PROJECT_DIR}/.anvil/` does not exist, **stop**. Tell the user this
 repo has no anvil setup and to run `/setup`.
 
-Do not create the directory, do not write a partial file, do not infer settings
-from what you can see. Missing is a clean state. Half-populated is not.
+## 2. Two ways in, and both end the same way
 
-## 2. What you read, and what you may write
+**Drafted from the conversation.** Look back over the session for the moments the
+user corrected you, told you to stop, re-did something you produced, or expressed
+that an output was wrong. Draft one entry per distinct lesson and put the list to
+them.
 
-Read, in this order:
+**Dictated.** The user says what to log. Take it, shape it into the schema, and
+show them what it became before writing it.
 
-- `${CLAUDE_PROJECT_DIR}/.anvil/BUDGETS.md` — if absent, defaults. Not an error.
-- `${CLAUDE_PROJECT_DIR}/.anvil/feedback/human.jsonl`
-- `${CLAUDE_PROJECT_DIR}/.anvil/feedback/self.jsonl`
-- `${CLAUDE_PROJECT_DIR}/.anvil/feedback/unrouted.md`
-- `${CLAUDE_PROJECT_DIR}/.anvil/CONFIG.md`
-- `${CLAUDE_PROJECT_DIR}/.anvil/CRITICAL_PATHS.md`
-- `${CLAUDE_PROJECT_DIR}/.anvil/REVIEW_RULES.md`
-- all five of `${CLAUDE_PROJECT_DIR}/.anvil/process/*.md`
-- `${CLAUDE_PROJECT_DIR}/CLAUDE.md` — **for the duplication check only** (§9)
+Either way, **the user picks what gets written.** That is the whole design of
+this command. Silent capture would fill the logs with entries nobody authored,
+and since a fingerprint reaching two sightings is what promotes a lesson, junk
+capture becomes junk in the context files two runs later — with the human's
+approval never once asked for.
 
-You may write `CONFIG.md`, `CRITICAL_PATHS.md`, `REVIEW_RULES.md`, the five
-`process/*.md`, `feedback/unrouted.md`, the `status` field of existing log
-entries, and new entries appended to `feedback/self.jsonl`.
+If the session holds nothing that looks like feedback, say so and stop. Do not
+manufacture entries to have something to show.
 
-You may **never** write `BUDGETS.md`, `CLAUDE.md`, any ticket file, or any code.
+## 3. Draft, then ask
 
-## 3. Resolve every budget before you write anything
+Show the entries you propose in plain terms, numbered, and say which log each
+would go to:
 
-A budget checked after the fact is a file already over its ceiling.
+```
+1. Test cases over-generated — one per criterion plus extras nobody asked for
+   → human.jsonl, process:kickoff, fingerprint `test-cases-over-generated`
+2. Asked which module was live instead of reading the flag registry
+   → self.jsonl, process:kickoff, fingerprint `context-omits-feature-flag`
+```
 
-| File                | Key              | Default |
-| ------------------- | ---------------- | ------- |
-| `CONFIG.md`         | `config`         | 10      |
-| `CRITICAL_PATHS.md` | `critical_paths` | 40      |
-| `REVIEW_RULES.md`   | `review_rules`   | 30      |
-| `process/<cmd>.md`  | see below        | 20      |
-| — (not a count)     | `stale_after`    | 20      |
+Then wait. Write only the ones they pick.
 
-`BUDGETS.md` is `key: number`, one per line. Any key it does not name keeps its
-default, and no `BUDGETS.md` at all means every default above. That is the
-expected case, not a missing file.
+**Show the fingerprint.** It is the one field the user cannot fix later and the
+one most likely to be wrong — it decides whether this lesson ever meets its own
+second sighting. Let them rename it.
 
-For a `process/*.md` the resolution order is `process:<command>`, then
-`process`, then 20. `process:scope: 40` beats `process: 30` for `scope.md` only.
+Take "log all of them" at face value; that is a real answer. Do not take silence
+or a change of subject as one.
 
-**A line is any line, including the title and blanks.** No exemptions —
-exemptions get gamed. Check with `wc -l < <file>`, never by eye.
+## 4. Which log
 
-## 4. Count sightings
+| Log           | Holds                                              | `correction`         |
+| ------------- | -------------------------------------------------- | -------------------- |
+| `human.jsonl` | a person corrected something, or said it was wrong | the words, or `null` |
+| `self.jsonl`  | you noticed it yourself — a stall, a guess         | always `null`        |
 
-- A sighting is matched by **exact `fingerprint` string**. Nothing fuzzy. A
-  fingerprint written as prose never matches its own second sighting; if you see
-  one, say so in the report — it is a bug in the command that wrote it.
-- **Count across both files.** One sighting in `human.jsonl` and one in
-  `self.jsonl` is **two**, not one each. This is the rule the two-file split
-  exists to protect: a lesson a person flagged and the model later hit on its
-  own is the best-evidenced kind in the system, and per-file counting is how it
-  would score lowest.
-- Thresholds count **distinct tickets**, not entries. Five entries from one
-  ticket are one sighting.
-- **`ticket: null` is one bucket.** Every null-ticket entry, in either file,
-  counts as a single distinct ticket however many there are. Two entries written
-  outside any ticket are one sighting; a null and a real ticket are two. Entries
-  from one sitting must not promote a line by themselves.
-- Only `open` entries are routed. `promoted`, `parked` and `dropped` are
-  history: read them for age (§9), never re-route them.
+The split is by **who noticed**, not by who is at fault. A user pointing out that
+you over-generated test cases is `human.jsonl` even though you are the one who
+did it.
 
-## 5. The admission test
+`correction` is nullable in `human.jsonl` because "this is wrong" is a real entry.
+Do not fabricate a fix the user did not give.
 
-Every open entry faces all three questions before it goes anywhere.
+## 5. The entry
 
-1. **Could Claude have inferred this from the code?** If yes, drop it.
-2. **Is it stated as a direct constraint rather than a suggestion?** If not,
-   rewrite it until it is.
-3. **Does it fit on one line?** If not, it is two lessons or it is not a lesson.
+```json
+{
+  "id": "fb-NNNN",
+  "ts": "ISO 8601 UTC",
+  "ticket": "dir name or null",
+  "command": "the command being corrected, or \"manual\"",
+  "category": "one of the closed set below",
+  "fingerprint": "kebab key for the lesson, not the instance",
+  "observed": "what happened",
+  "correction": "what the user said instead, or null",
+  "proposed_line": "the one-line constraint this would become, or null",
+  "status": "open"
+}
+```
 
-Question 1 failing sets `status: "dropped"`. Question 2 failing is a rewrite of
-`proposed_line`, not a rejection — "prefer", "consider" and "try to" all fail it.
-Question 3 failing leaves the entry `open` and names it in the report as
-carrying two lessons; a human splits it, because guessing the split is how one
-correction becomes two wrong lines.
+**`command` is the command the feedback is about**, not this one. Feedback about
+a `/kickoff` run is `"kickoff"` even though `/feedback` wrote it down. Use
+`"manual"` when the feedback is not about any command — a note about the repo, or
+about anvil itself.
 
-**Record which question killed every entry you dropped.** A rejection with no
-reason is indistinguishable from a routing bug.
+**`category` records who should change**, which is frequently not who was
+running. Test cases over-generated during `/kickoff` is `process:kickoff`; a
+ticket that was scoped too broadly and only became obvious during `/build` is
+`process:scope`.
 
-Most corrections fail question 1. They die in the logs. That is the system
-working, not failing.
+The category set is closed: `claude-md`, `config`, `path`, `review`,
+`process:scope`, `process:kickoff`, `process:build`, `process:verify`,
+`process:review`, `ticket`, `unrouted`. Anything that does not fit is
+`unrouted` — never invent a key. The pile of unrouted entries is the evidence for
+what the table is missing, and inventing keys destroys it.
 
-## 6. Route
+**`fingerprint` is short kebab-case, no spaces.** Matching is by exact string.
+`test-cases-over-generated` is a fingerprint; "generated too many test cases in
+the kickoff for ticket 3" is not. A prose fingerprint never matches its own
+second sighting, so the lesson never reaches a threshold and the loop silently
+does nothing while looking healthy.
 
-The category set is **closed**. An entry carrying a category not in this table is
-a defect in the command that wrote it: leave it `open`, report it, and do not
-invent a destination.
+Before you write, **check whether this lesson already has a fingerprint in the
+logs** and reuse it if so. A second sighting under a new name is a first sighting
+twice, and it is the most common way this system fails to learn.
 
-| `category`        | Destination                | Threshold          |
-| ----------------- | -------------------------- | ------------------ |
-| `claude-md`       | proposed to `CLAUDE.md`    | 3 distinct tickets |
-| `config`          | `CONFIG.md`                | 1 — a fact         |
-| `path`            | `CRITICAL_PATHS.md`        | 1 — a fact         |
-| `review`          | `REVIEW_RULES.md`          | 2 distinct tickets |
-| `process:scope`   | `process/scope.md`         | 2 distinct tickets |
-| `process:kickoff` | `process/kickoff.md`       | 2 distinct tickets |
-| `process:build`   | `process/build.md`         | 2 distinct tickets |
-| `process:verify`  | `process/verify.md`        | 2 distinct tickets |
-| `process:review`  | `process/review.md`        | 2 distinct tickets |
-| `ticket`          | that ticket's `CONTEXT.md` | 1, at capture time |
-| `unrouted`        | `feedback/unrouted.md`     | n/a                |
+**`proposed_line` is the constraint the lesson would become** — one line,
+imperative, no hedging. It is what `/improve` would put in a context file, so
+write it as a line you would want to read there, not as a description of what
+happened.
 
-`category: "ticket"` is **not yours to write**. The capturing command already
-wrote that line into the ticket's `CONTEXT.md`; flip the entry to `promoted` and
-touch no file.
+**`fb-NNNN` is one sequence across both files** — the highest id in either, plus
+one. Read both before you write either.
 
-`category: "unrouted"` appends one bullet to `unrouted.md` carrying the
-`fb-NNNN` id and the date, and sets the entry to `parked`.
+`ticket` is the ticket directory name if the feedback is about work on one, and
+`null` otherwise. Do not guess it from the branch.
 
-`review` versus `process:verify`, which otherwise collect each other's lines: if
-the line still makes sense with no diff in front of you it is `process/verify.md`;
-if it only means anything while reading code it is `REVIEW_RULES.md`.
+## 6. Then stop
 
-## 7. Write the line, and pay for it
+Say what was written, and where. Then stop.
 
-A promoted line is the entry's `proposed_line`: one line, imperative, no
-rationale, no URL, no date, no promotion marker, no citation count. The file is
-constraint only — the history is in the logs.
+Do not promote anything. Do not touch a context file. Do not apply a threshold or
+tell the user a lesson is "nearly there" — counting is `/improve`'s job and it
+counts across both logs in ways this command does not need to know about.
 
-**Under budget.** Append it.
+Tell them `/improve` is what turns these into context-file lines, and that it
+will ask before it changes anything.
 
-**At budget — one in, one out.** Name the line you are evicting, state why the
-new line is worth more, and append the evicted text to `self.jsonl` as an entry
-with `"command": "feedback"`, `"category": "unrouted"`, `"status": "parked"`,
-and the trigger that fired. Nothing leaves a context file without landing in a
-log.
+## 7. Writing to the logs
 
-**A removal entry is a record, not a lesson.** It is born `parked` and is never
-routed on a later run — an `open` one would become an `unrouted.md` bullet on
-the next invocation, which breaks idempotence and buries the signal that pile
-exists to carry.
+Append one JSON object per line, never pretty-printed. Append only — do not
+rewrite an existing entry, do not reorder, do not reformat a line you are not
+adding.
 
-**Nothing weaker than the new line — fail hard.** Report the conflict and
-present **both** ways out:
-
-- evict a specific named line, or
-- raise this file's budget in `BUDGETS.md`.
-
-Then do neither. Do not ship a file one line over. Do not silently drop the
-lesson. Do not lower the bar until something looks evictable.
-
-> **You never write `BUDGETS.md`, and you never edit a budget key — including
-> when the user says raising it is obviously right.** Give them the exact
-> `key: number` line to add and let them add it.
-
-Raising a ceiling is a human decision by definition: the whole meaning of the act
-is that someone looked at the trade and chose to pay more. A tool that raises its
-own ceiling at the moment the ceiling binds has not made that decision, it has
-deleted the only point in the system where someone is forced to say which of two
-constraints actually matters. The hard failure **is** the mechanism.
-
-When a file is full, look for a stale line before you reach for the ceiling.
-
-## 8. `claude-md` proposes and never writes
-
-At three distinct tickets, print the proposed one-line addition and the reason,
-and stop. Write nothing. The entries stay `open`.
-
-Never mark your own proposal `promoted`. You cannot see whether the human
-accepted it, and the one thing that closes it is the line turning up in
-`CLAUDE.md` — which trigger 2 sees on a later run.
-
-## 9. The staleness pass — every run
-
-Run this on every invocation, not only when a file is at its ceiling. A line that
-has quietly stopped earning its place is charged to every run of its command
-forever, and nothing about a full file is what makes that wrong.
-
-Three triggers. They do not have the same authority.
-
-**Trigger 1 — budget pressure.** §7. One in, one out, the evicted line named and
-justified, hard fail when nothing existing is weaker.
-
-**Trigger 2 — duplication. Removes automatically.** Read the repo's `CLAUDE.md`
-and check whether the substance of any context-file line now appears there. If it
-does, remove the anvil-side line, and append the removed text to `self.jsonl`
-naming trigger 2 — same shape as §7, born `parked` and never re-routed. Nothing is lost: the constraint still holds, stated once
-instead of twice, and two statements of one constraint is how the two drift
-apart.
-
-> **If the removed line's fingerprint has an open `claude-md` proposal, flip that
-> proposal to `promoted` in the same pass.** The line appearing in `CLAUDE.md`
-> **is** the human's acceptance, observed rather than assumed. Left un-flipped,
-> you re-propose it forever against a `CLAUDE.md` that already contains it.
-
-This trigger is not budget-driven. It fires on a file nowhere near its ceiling.
-**`CLAUDE.md` is read here and never written.**
-
-**Trigger 3 — obsolescence. Presents, and never removes.** A line promoted more
-than `stale_after` tickets ago whose fingerprint has not been seen since: name
-the line, say when it was promoted and how long its fingerprint has been quiet,
-and **stop there**. The user drops it or keeps it. Removing on this evidence
-alone is the failure to avoid.
-
-A fingerprint going quiet has two readings that look identical in the logs — the
-lesson is dead weight because Claude is now good enough at that pattern, or the
-line is working and the silence is the line doing its job. The second is common
-and you cannot tell it from the first.
-
-Log a trigger-3 removal when the user accepts it, never when you present it.
-
-**Age comes from the logs.** Every promoted line has at least one entry behind it
-carrying `ts`, `ticket` and `status: "promoted"`. "Tickets since" is the count of
-**distinct non-null `ticket` values** appearing in entries with a later `ts` than
-that promotion. Do not date-stamp context files and do not build citation
-tracking to answer a question the logs already answer.
-
-**Line counts after a staleness pass go down or stay level. Never up.**
-
-## 10. Statuses, rewritten in place
-
-The logs are append-only in their **entries**. The `status` field is the one
-thing you may rewrite on an existing line.
-
-- `open` → `promoted` — the line landed in a context file, or trigger 2 saw the
-  accepted `CLAUDE.md` line
-- `open` → `parked` — routed to `unrouted.md`
-- `open` → `dropped` — failed admission question 1
-- `parked` → `dropped` — the question has been answered, **and the user says so
-  in this run**. Remove the bullet from `unrouted.md`, log the removal like any
-  other, and name where it was answered. Never decide this yourself: a settled
-  question is a judgment about a document, not something visible in the logs
-- `open` stays `open` — below threshold, or a `claude-md` proposal awaiting a
-  human
-
-When you rewrite a line, change **only** `status`. Same field order, every other
-value byte-for-byte, same line order, one object per line, never pretty-printed.
 Confirm before you exit:
 
 ```bash
-wc -l ${CLAUDE_PROJECT_DIR}/.anvil/feedback/*.jsonl
 python3 -c "import json;[json.loads(l) for f in ['human.jsonl','self.jsonl'] for l in open('${CLAUDE_PROJECT_DIR}/.anvil/feedback/'+f)]"
 ```
 
-Line counts must be unchanged except for entries you appended, and both files
-must still parse. A reformatted log is a corrupted evidence base.
+A log that no longer parses is a corrupted evidence base, and it is corrupted in
+the one file that is supposed to be the permanent record.
 
-Your own appended entries use `"command": "feedback"` and the shared `fb-NNNN`
-sequence — the next id is the highest in **either** file plus one.
+## 8. Start cold is not a requirement here
 
-## 11. Idempotence
+Every other anvil command assumes no conversation history. This one is the
+exception, and deliberately: the conversation **is** the input when you are
+drafting from it.
 
-**Two consecutive runs: the second changes nothing.** It promotes nothing,
-removes nothing, appends no bullet and no log entry.
-
-Before writing any line, check whether it is already in the file. A promoted
-entry whose `status` you failed to flip gets re-promoted on every future run, and
-the duplicate line looks exactly like a line the file earned.
-
-Re-presenting a trigger-3 line the user chose to keep is fine — presenting is not
-changing. Changing a file twice for one lesson is not.
-
-## 12. The report
-
-End every run with:
-
-- promoted — file, and the line
-- evicted — the line, and why the new one beat it
-- removed by trigger 2 — the line, and the `CLAUDE.md` line that duplicates it
-- presented by trigger 3 — the line, promoted when, quiet how long
-- proposed for `CLAUDE.md` — the line, and why
-- rejected — each one, and **which admission question killed it**
-- parked — count
-- **the `unrouted.md` count**, every run, even when it is zero
-
-Count the bullets in the file, not the entries that ever carried
-`category: "unrouted"` — a question that has been answered and closed is not
-still open evidence.
-
-Above ten, say that the category table needs review. That pile is the evidence
-for what the table is missing, not a rubbish bin.
-
-## 13. Never
-
-- write `BUDGETS.md` or `CLAUDE.md`, or edit any budget key
-- ship a context file over its resolved budget
-- remove a line under trigger 3 without the user accepting it
-- add a date stamp, promotion marker or citation count to a context file
-- promote a line nobody logged, or seed one from a plausible guess
-- edit any field of a log entry other than `status`, and never a `ts` or a
-  `ticket` — a forged entry is indistinguishable from a real one afterwards, and
-  the logs are the evidence for anvil's central claim
-- invent a category
-
-## 14. Start cold
-
-Assume no conversation history. The files in §2 are the whole input. If you need
-something from earlier in the session to finish, that is a `self.jsonl` entry —
-write it down rather than working around it.
+That has a cost worth stating to the user — run `/feedback` before `/clear`, or
+the session it would have drafted from is gone. Dictating still works after a
+clear, but the drafting does not.
