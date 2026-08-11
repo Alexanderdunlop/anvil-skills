@@ -1348,32 +1348,30 @@ Deliberately unresolved. Each is parked until evidence arrives.
   command that only works where MCP works is not a command that works in any
   repo, which was the constraint this question was really about.
 
-  Unproven in the same sense as everything else at M5 — the degradation path is
-  specified and has not been exercised against a repo where smoke tests would
-  otherwise succeed.
 - **Ticket ids.** Defaulting to local slugs. If `tracker` ends up always
   pointing at a real backlog, the local path is dead weight and should go. See
   the worktree collision noted under `CONFIG.md`.
-- **Tracker modes 2 and 3 are untested by the roadmap.** `anvil-skills`, `site`
-  and `dodgeball` are all `tracker: local`, so M0–M7 exercise mode 1 only. The
-  mirror format and the no-local-copy rule are specified but unproven. Either a
-  milestone gains a repo with a real tracker, or the contract should say the
-  external modes are provisional. Not resolved here — it needs a decision about
-  which repo, and there may not be one.
+- **Tracker modes 2 and 3 want a repo with a real tracker.** Every repo anvil
+  has run in so far is `tracker: local`, so mode 1 is the one with mileage on it.
+  The mirror format and the no-local-copy rule are specified in §4.8 and hold as
+  written; a repo with a live Jira or Linear integration is what would turn that
+  from a specification into a habit. If you run one, the routing issue template
+  is the place to say what broke.
 - **~~`MAP.md` versus an existing `CLAUDE.md`.~~ Decided.** `CLAUDE.md` wins,
   and anvil does not duplicate it. `MAP.md` is now `CONFIG.md` (§4.1) and holds
   only anvil's own configuration plus pointers outside the repo — the repo facts
   that created the overlap are gone from it, and the always-read file that
   would have restated `CLAUDE.md` constraints is deleted (§4.10). There is
-  nothing left to duplicate, so no `claude-md:` key is needed. `dodgeball` at M7
-  becomes a confirmation rather than a decision: an existing `CLAUDE.md` should
-  leave its `CONFIG.md` unchanged.
+  nothing left to duplicate, so no `claude-md:` key is needed. `/setup` in a repo
+  that already has a `CLAUDE.md` is a confirmation of that ruling rather than a
+  decision to reopen: the existing file should leave `CONFIG.md` unchanged.
 - **Unstateable critical paths.** `CRITICAL_PATHS.md` requires an executable or
   observable check per line. Some things that genuinely must not break are not
   expressible that way — "the throw arc feels right" is real and is not a
-  command. If M7 hits this, it is a finding about the contract, not about the
-  repo, and the answer is either an explicit `manual:` prefix or an honest
-  admission that anvil does not cover taste.
+  command. `/setup` records one of these as a feedback entry rather than
+  inventing a check that does not measure it, and those entries are the evidence
+  for the fix — either an explicit `manual:` prefix, or an honest admission that
+  anvil does not cover taste.
 
 ---
 

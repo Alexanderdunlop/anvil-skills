@@ -115,7 +115,8 @@ Carried forward from the note, still undecided, parked until there is evidence:
 - **PR template.** Whether `/verify` updates the repo's PR template with a
   smoke-test section, posts a comment, or does neither. The note's own
   uncertainty — "or I'm not sure tbh" — was correct. Touching a shared template
-  is invasive for a tool that claims to work in any repo. Parked until M5.
+  is invasive for a tool that claims to work in any repo, so it stays parked
+  until a real run produces something worth reporting there.
 - **Smoke tests in `/kickoff`.** Whether `/kickoff` generates them alongside
   `TEST_CASES.md`, or `/verify` derives them at check time.
 - **Worktrees.** The note raises them as a `/kickoff` option. Unresolved, and it
