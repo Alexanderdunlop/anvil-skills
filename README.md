@@ -26,13 +26,51 @@ small enough to be worth reading on every run.
 
 ## Status
 
-Pre-alpha. One of the eight commands exists.
+Pre-alpha, `0.1.0`, published nowhere. All eight skills exist. Most of them have
+never run.
 
-M0 and M1 are done: the file contract and the feedback entry format were
-hand-authored from real corrections, and `/scope` is built and verified against
-the installed plugin rather than the working tree. It installs from a local
-marketplace and is published nowhere. `/feedback` is next, and until it exists
-nothing is distilled and nothing compounds — the logs just accumulate.
+That distinction is the honest one and it is worth stating plainly:
+
+| Milestone | State                                                                                |
+| --------- | ------------------------------------------------------------------------------------ |
+| M0, M1    | done — the contract, the entry format, and `/scope` verified on the installed plugin |
+| M2–M7     | written, and carrying about forty checks that have not been run                      |
+
+The checks are in [evals/README.md](evals/README.md), each one written before the
+run rather than after it. Until they pass, treat every command except `/scope` as
+a specification that happens to be executable.
+
+## Install
+
+```bash
+claude plugin marketplace add /path/to/anvil-skills
+claude plugin install anvil-skills
+```
+
+All eight skills are discovered from `skills/` and appear as `/name`. None of
+them fires on its own — every one carries `disable-model-invocation: true`,
+because a command that writes files and waits at approval gates should run when
+you say so and not when a model thinks it seems relevant.
+
+## First run
+
+```
+/setup     once per repo, creates .anvil/ from questions
+/scope     a rough idea becomes one sliced ticket, behind a gate
+/kickoff   the ticket becomes CONTEXT.md, PLAN.md and TEST_CASES.md, behind a gate
+/build     the plan becomes code, and every stall becomes a log entry
+/verify    every case gets PASS, FAIL or COULD NOT CHECK, with evidence
+/review    was it scoped right, did the slice hold
+/feedback  distils the logs into the context files the others read
+/research  turns what could not be routed into a question for outside
+```
+
+Run `/clear` between commands. Each one is written to start cold from files
+alone, and that property is only real if it is exercised.
+
+Without `.anvil/`, the other seven stop and point at `/setup`. None of them
+creates a file, guesses a config, or proceeds on defaults — missing is a clean
+state, half-populated is not.
 
 ## Docs
 

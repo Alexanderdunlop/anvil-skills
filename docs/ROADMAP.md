@@ -22,7 +22,7 @@ used in anger first.
 | M4    | in progress | `/kickoff` and `/build` written, plus eleven checks for the pair      |
 | M5    | in progress | `/verify` written, and the MCP degradation question closed            |
 | M6    | in progress | `/review` written, and the boundary against `/verify` written down    |
-| M7    | not started | —                                                                    |
+| M7    | in progress | `/setup`, `/research`, the issue template, and `version: 0.1.0`       |
 
 **The ticket numbering above was wrong and is corrected here.** This list ran
 0002–0007 on the assumption that an earlier milestone had minted 0001. None had
@@ -805,9 +805,49 @@ rather than writing it twice; the new work is the question set for `CONFIG.md`,
 - `claude plugin eval` passes, including the M1 gate case and the M6 boundary
   case.
 
+### The format-freeze walk, done at M7
+
+The contract changed five times after M3. The check is whether `/setup`
+implements each one, and for three of them the honest answer is that there is
+nothing to implement — they govern commands `/setup` is not.
+
+| Change                                          | From             | What `/setup` must do                                     |
+| ----------------------------------------------- | ---------------- | ---------------------------------------------------------- |
+| §4.6 `ticket: null` is one bucket                | `fb-0008`        | nothing — `/feedback` counts, `/setup` does not             |
+| §4.6 `command: "manual"` is legal                | `fb-0007`        | nothing — but confirms `"command": "setup"` needs no ruling |
+| §4.7 a parked entry can be closed                | `fb-0007/0008`   | nothing — `/feedback` owns `unrouted.md`                    |
+| §7 MCP degradation                               | M5               | **offer `smoke: none` as a first-class answer**, and never push the user toward installing an MCP server |
+| §4.4 `/verify` and `/review` read it oppositely  | M6               | **seed `REVIEW_RULES.md` with diff-checkable lines only** — a line that makes sense with no diff in front of you has no home there |
+
+Both live implications are in the skill. The three that require nothing are
+recorded rather than skipped, because "no change needed" and "not checked" look
+identical in a file list a year later.
+
+### Two decisions taken here
+
+**`version: 0.1.0`.** Unset from M0 to M6 meant the git SHA was the version and
+users moved on every commit, which is right while the format moves and wrong the
+moment anyone installs it. `0.x` says unstable without pretending otherwise, and
+setting it made `claude plugin validate . --strict` pass — the missing-version
+warning was its only diagnostic, and `--strict` treats warnings as errors, so a
+CI gate is available for the first time. Logged as `fb-0012`: `CRITICAL_PATHS.md`
+still names the non-strict form, which passed with warnings for seven milestones
+and would keep passing if the manifest regressed.
+
+**No `hooks/`.** The milestone allows one "only if a real need survived M0–M6".
+None did. Every behaviour anvil needs is either inside a skill or is a check a
+human runs, and a hook would be the first piece of anvil that fires without being
+asked — which is the property `disable-model-invocation: true` exists to prevent
+everywhere else.
+
 **Risk retired.** Writing a generator against a format that is still moving —
 the single most expensive rework in the project, avoided by ordering rather than
 by care.
+
+Retired in the sense the ordering was meant to achieve: the format survived six
+milestones before the generator was written, and the walk above found two live
+implications rather than a rewrite. Not retired in the sense of proven — `/setup`
+has never generated anything.
 
 ---
 

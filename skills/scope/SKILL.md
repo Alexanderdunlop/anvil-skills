@@ -48,11 +48,11 @@ written.
 Read `tracker:` from `CONFIG.md` first. Never assume
 `${CLAUDE_PROJECT_DIR}/.anvil/tickets/<id>/TICKET.md` exists.
 
-| `tracker:`                                | Body lives in | What `/scope` writes                          |
-| ----------------------------------------- | ------------- | --------------------------------------------- |
-| `local`                                   | `TICKET.md`   | `TICKET.md` — it **is** the ticket            |
-| external, integration reachable this run  | the tracker   | the ticket in the tracker, no local copy      |
-| external, no integration reachable        | the tracker   | `TICKET.md` as a labelled `MIRROR`            |
+| `tracker:`                               | Body lives in | What `/scope` writes                     |
+| ---------------------------------------- | ------------- | ---------------------------------------- |
+| `local`                                  | `TICKET.md`   | `TICKET.md` — it **is** the ticket       |
+| external, integration reachable this run | the tracker   | the ticket in the tracker, no local copy |
+| external, no integration reachable       | the tracker   | `TICKET.md` as a labelled `MIRROR`       |
 
 If `tracker:` names an external tracker and you cannot reach it in this session,
 that is the third row. Say so before you write anything — the user needs to know
@@ -86,7 +86,7 @@ names an implementation, rewrite it as the outcome that implementation produces.
 Out of scope section usually means nothing was cut, which usually means the
 ticket is not sliced.
 
-**How to slice is not this file's decision.** This skill fixes the *shape* of the
+**How to slice is not this file's decision.** This skill fixes the _shape_ of the
 output. The rules for how small a ticket should be in this repo live in
 `process/scope.md` and get there by being corrected twice. Do not add slicing
 heuristics here — a plausible rule nobody in this repo has ever asked for is a
@@ -184,7 +184,7 @@ sentence describing what happened.
 Matching is by exact string. A fingerprint written as prose never matches its
 own second sighting, so the lesson never reaches the threshold and never gets
 promoted — the failure is silent and looks like nothing was ever learned. Write
-the key you would want the *next* run to collide with.
+the key you would want the _next_ run to collide with.
 
 **Write these before the command exits.** `/clear` runs between commands, so an
 unflushed entry is a lost entry.

@@ -36,11 +36,22 @@ command that only starts cold in theory does not start cold.
 ### 1. Path rule, static
 
 ```bash
-grep -rn '\.anvil/' skills/ | grep -v CLAUDE_PROJECT_DIR
+for f in skills/*/SKILL.md; do
+  awk -v F="$f" '/^```/{inf=!inf; next} !inf && /\.anvil\// && !/CLAUDE_PROJECT_DIR/ {print F":"FNR": "$0}' "$f"
+done
 ```
 
 Must print nothing. Any hit is a review-blocking defect: a bare `.anvil/` path
 resolves against the plugin cache copy of this repo rather than the user's.
+
+**The fence skip was added at M7 and is not a loophole.** The plain
+`grep -rn '\.anvil/' skills/ | grep -v CLAUDE_PROJECT_DIR` was the check through
+M6, and `/setup` is the first skill that legitimately fails it: the `CONFIG.md`
+it generates carries a repo-relative `tickets:` value, and prefixing that would
+make it generate a wrong file. The rule governs paths a skill *resolves*, not
+content it *emits* — see `FILE_CONTRACT.md` §0. Everything outside a fence is
+prose or a path and still has to carry the prefix, which is why the two prose
+mentions caught at M4 were rewritten rather than exempted.
 
 ### 2. Always-on cost
 
@@ -604,3 +615,152 @@ the rename" is a finding.
 
 A review with nothing to say must say so briefly rather than manufacture
 findings — invented findings teach the logs a pattern that is not there.
+
+---
+
+## Manual re-test — `/setup`
+
+Fresh generation runs in `dodgeball`: no npm, an unusual test runner, an existing
+`CLAUDE.md`. The update path runs in `site`, which has carried a real `.anvil/`
+since M4. Neither repo can supply both halves.
+
+**Do not prepare `dodgeball`.** It receives a generated `.anvil/` and nothing
+else. Hand-editing it to resemble `site` is how it stops being the unfamiliar
+case that makes the test worth running.
+
+### 1. Fresh generation
+
+```bash
+find .anvil -type f | sort
+wc -l .anvil/CONFIG.md .anvil/CRITICAL_PATHS.md .anvil/REVIEW_RULES.md
+wc -l .anvil/process/*.md      # one line each, all five
+ls .anvil/BUDGETS.md           # must not exist
+ls .anvil/tickets 2>/dev/null  # must not exist — /scope makes it
+```
+
+Every seeded line must trace to something the user said in the run. A line you
+cannot point at an answer for is the failure this whole skill is shaped around.
+
+### 2. `CLAUDE.md` confirmation, not decision
+
+`dodgeball` has one. `CONFIG.md` must gain nothing that restates it, and
+`CLAUDE.md` itself must be untouched:
+
+```bash
+git diff --stat CLAUDE.md    # nothing
+```
+
+The overlap question was settled in `FILE_CONTRACT.md` §7 — `CLAUDE.md` wins and
+anvil does not duplicate it. If this fails, the finding is a contract bug, not a
+`/setup` question to reopen.
+
+### 3. Unstateable paths are recorded, not dropped
+
+Ask `dodgeball` for its critical paths. At least one will not be expressible as
+an executable or observable check — that is the main thing this repo is here to
+surface.
+
+It must appear as a feedback entry, and the user must be told it was recorded.
+Silently omitting it, or inventing a check that does not measure the thing, are
+both failures.
+
+### 4. `CONFIG.md` stays config
+
+```bash
+grep -nE '^(test|build|lint|entrypoint|framework):' .anvil/CONFIG.md
+```
+
+Must print nothing. All of those are readable from the repo, and a stale line
+gets trusted where a stale lookup gets re-run.
+
+### 5. Update path — `site`
+
+Re-run `/setup` over the existing `.anvil/`, answering nothing new.
+
+```bash
+git diff .anvil/    # must print nothing at all
+```
+
+Then re-run adding one new review rule. Only that line appears. Human-written
+lines and lines `/feedback` promoted over three milestones are all still there,
+unreworded and unsorted.
+
+### 6. Cold install
+
+In a repo with no `.anvil/`, run each of the other seven. Every one stops and
+points at `/setup` — `/research` included, since its inputs live there too.
+
+```bash
+git status --short    # clean after all seven
+```
+
+None creates a file, guesses a `CONFIG.md`, or proceeds on defaults.
+
+---
+
+## Manual re-test — `/research`
+
+### 1. It writes nothing
+
+```bash
+chmod -R a-w .anvil/
+```
+
+Run it. It must complete and emit its prompt. Then:
+
+```bash
+chmod -R u+w .anvil/
+git status --short .anvil/    # clean — not even a log entry
+```
+
+Stronger than `/review`'s check in §1 of that list, and deliberately: `/review`
+still appends to the logs, and this command appends nothing at all.
+
+### 2. The prompt is evidence-backed
+
+It cites `fb-NNNN` ids, quotes enough of each entry for an outsider to judge it,
+and says what an answer would change. A prompt that would change nothing is not
+the question worth asking.
+
+### 3. The empty pile
+
+Run it against an `unrouted.md` with no bullets. It must say there is no evidence
+and stop. A question produced anyway is the same error as seeding a context file
+from a guess — it looks like output and it is made up.
+
+### 4. The upstream path, end to end
+
+Take the emitted prompt and open an issue on this repo from
+`.github/ISSUE_TEMPLATE/research-prompt.md`, by hand.
+
+If the template asks for a field the prompt does not produce, that is a finding
+about `/research`'s output format — not about the template.
+
+---
+
+## Packaging checks — M7
+
+### 1. Strict validation
+
+```bash
+claude plugin validate . --strict
+```
+
+Exits 0. This became available at M7 when `version` was set: the missing-version
+warning was its only diagnostic, and `--strict` treats warnings as errors.
+
+### 2. All eight are discovered
+
+Install into a clean Claude Code and confirm all eight appear as `/name`. The
+manifest declares no skills — they are discovered from `skills/` — so
+`claude plugin validate` never could have checked this. Only an install can.
+
+### 3. Final cost gate
+
+```bash
+claude plugin details anvil-skills
+```
+
+Zero always-on tokens beyond the eight skill descriptions. If it has crept up
+since M1's baseline, guidance leaked out of a skill body into something loaded
+every session.
