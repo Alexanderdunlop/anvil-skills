@@ -1,5 +1,6 @@
 {
   "name": "anvil-skills",
+  "version": "0.1.0",
   "displayName": "Anvil Skills",
   "description": "Claude Code skills that learn from your corrections: scope, build, verify, then distil the feedback back into the context files so the next ticket goes better.",
   "author": {

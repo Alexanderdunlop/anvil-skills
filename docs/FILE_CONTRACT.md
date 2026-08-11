@@ -62,6 +62,30 @@ completely.
 
 A bare `.anvil/` path in any `SKILL.md` is a review-blocking defect.
 
+**One exception, found at M7: file content a skill generates.** `/setup` writes a
+`CONFIG.md` whose `tickets:` value is a repo-relative path, and that value is
+correct exactly as the user's file will contain it. Substituting
+`${CLAUDE_PROJECT_DIR}` there would make `/setup` generate a wrong file.
+
+The rule governs **paths a skill resolves**, and it always did — the exception is
+new only because `/setup` is the first skill that emits Tree B content rather
+than reading and writing it. The distinction is real: resolving a bare path
+against the wrong tree is the bug; printing one inside a file you are creating is
+the job.
+
+The check has to be able to tell them apart, so it skips fenced blocks:
+
+```bash
+for f in skills/*/SKILL.md; do
+  awk -v F="$f" '/^```/{inf=!inf; next} !inf && /\.anvil\// && !/CLAUDE_PROJECT_DIR/ {print F":"FNR": "$0}' "$f"
+done
+```
+
+A fence is a weak discriminator and it is the honest one available: everything
+outside a fence is prose or a path, and both must carry the prefix. Anything
+that wants the exception has to be inside a block that shows what a generated
+file looks like, which is the only place it is ever legitimate.
+
 ### Skills, not commands
 
 All eight are `skills/<name>/SKILL.md`. Both `skills/` and `commands/` produce
