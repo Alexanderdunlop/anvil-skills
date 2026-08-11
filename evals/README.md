@@ -35,11 +35,11 @@ command that only starts cold in theory does not start cold.
 
 ### 1. Path rule, static
 
-```bash
+````bash
 for f in skills/*/SKILL.md; do
   awk -v F="$f" '/^```/{inf=!inf; next} !inf && /\.anvil\// && !/CLAUDE_PROJECT_DIR/ {print F":"FNR": "$0}' "$f"
 done
-```
+````
 
 Must print nothing. Any hit is a review-blocking defect: a bare `.anvil/` path
 resolves against the plugin cache copy of this repo rather than the user's.
@@ -48,8 +48,8 @@ resolves against the plugin cache copy of this repo rather than the user's.
 `grep -rn '\.anvil/' skills/ | grep -v CLAUDE_PROJECT_DIR` was the check through
 M6, and `/setup` is the first skill that legitimately fails it: the `CONFIG.md`
 it generates carries a repo-relative `tickets:` value, and prefixing that would
-make it generate a wrong file. The rule governs paths a skill *resolves*, not
-content it *emits* — see `FILE_CONTRACT.md` §0. Everything outside a fence is
+make it generate a wrong file. The rule governs paths a skill _resolves_, not
+content it _emits_ — see `FILE_CONTRACT.md` §0. Everything outside a fence is
 prose or a path and still has to carry the prefix, which is why the two prose
 mentions caught at M4 were rewritten rather than exempted.
 
@@ -176,7 +176,7 @@ The rest each need a fresh session against the **installed** plugin — see
 to the thing you are testing.
 
 **These checks mutate `.anvil/`, which is committed.** Every one of them ends
-with a restore, and the milestone is not done until `git status --short` is clean
+with a restore, and you are not finished until `git status --short` is clean
 apart from the intended changes.
 
 > **Never forge a log entry to reach a condition.** No hand-edited `ts`, no
@@ -187,14 +187,15 @@ apart from the intended changes.
 
 ### 1. Path rule and always-on cost, static
 
+Check 1 of the `/scope` list already covers every skill, so run that one and:
+
 ```bash
-grep -rn '\.anvil/' skills/ | grep -v CLAUDE_PROJECT_DIR   # must print nothing
-claude plugin details anvil-skills                          # always-on unchanged
+claude plugin details anvil-skills    # always-on unchanged
 ```
 
-Check 1 of the `/scope` list already covers every skill. The second command is
-the one worth re-reading: adding a second skill must move the always-on number
-by its description only. Anything else means guidance leaked out of the body.
+That is the number worth re-reading: adding a skill must move it by that skill's
+description and nothing else. Anything more means guidance leaked out of the
+body into something loaded every session.
 
 ### 2. It writes nothing it does not own
 
@@ -210,7 +211,7 @@ Every hit must be a read or a prohibition. A skill that describes writing
 Needs a real pair: the same `fingerprint` in `human.jsonl` and in `self.jsonl`,
 across two distinct tickets — where the null-ticket bucket counts as one ticket
 (`FILE_CONTRACT.md` §4.6). Do not manufacture the pair. It arrives from real
-runs, and until it does this check is **pending**, not passed.
+runs. Manufacturing the pair would defeat the check.
 
 Run `/feedback`. The fingerprint must promote at two sightings, and **both**
 entries must flip to `promoted`, in both files.
@@ -360,8 +361,8 @@ Above ten, it says the category table needs review.
 
 ## Manual re-test — `/kickoff`
 
-Needs a repo with something to plan against. `anvil-skills` has no test runner
-and no build, so these run in `site` from M4 onward.
+Needs a repo with something to plan against. This one has no test runner and no
+build, so these run against a subject repo rather than here.
 
 ### 1. Precondition and gate
 
@@ -474,8 +475,8 @@ it, which is why there is not one.
 
 ## Manual re-test — `/verify`
 
-Runs in `site`. The degradation check is only meaningful in a repo where smoke
-tests would otherwise work, which rules out this one.
+Runs against a subject repo. The degradation check is only meaningful where
+smoke tests would otherwise work, which rules this one out.
 
 ### 1. Every line gets a verdict
 
@@ -548,7 +549,8 @@ git status --short .anvil/    # no context file edited by the run
 
 ## Manual re-test — `/review`
 
-Runs in `site`. Judging whether a slice held needs real PRs of real size.
+Runs against a subject repo. Judging whether a slice held needs real PRs of real
+size.
 
 ### 1. It writes only to the logs
 
@@ -620,13 +622,15 @@ findings — invented findings teach the logs a pattern that is not there.
 
 ## Manual re-test — `/setup`
 
-Fresh generation runs in `dodgeball`: no npm, an unusual test runner, an existing
-`CLAUDE.md`. The update path runs in `site`, which has carried a real `.anvil/`
-since M4. Neither repo can supply both halves.
+Two subjects, because no single repo supplies both halves. **Fresh generation**
+wants a repo that is alien in useful ways — no npm, an unusual test runner, an
+existing `CLAUDE.md`, critical paths that resist executable checks. **The update
+path** wants one that has carried a working `.anvil/` for a while.
 
-**Do not prepare `dodgeball`.** It receives a generated `.anvil/` and nothing
-else. Hand-editing it to resemble `site` is how it stops being the unfamiliar
-case that makes the test worth running.
+**Do not prepare the fresh-generation subject.** It receives a generated
+`.anvil/` and nothing else. Hand-editing it to resemble a repo the format already
+fits is how it stops being the unfamiliar case that makes the test worth
+running.
 
 ### 1. Fresh generation
 
@@ -643,7 +647,7 @@ cannot point at an answer for is the failure this whole skill is shaped around.
 
 ### 2. `CLAUDE.md` confirmation, not decision
 
-`dodgeball` has one. `CONFIG.md` must gain nothing that restates it, and
+Use a subject that has one. `CONFIG.md` must gain nothing that restates it, and
 `CLAUDE.md` itself must be untouched:
 
 ```bash
@@ -656,9 +660,9 @@ anvil does not duplicate it. If this fails, the finding is a contract bug, not a
 
 ### 3. Unstateable paths are recorded, not dropped
 
-Ask `dodgeball` for its critical paths. At least one will not be expressible as
-an executable or observable check — that is the main thing this repo is here to
-surface.
+Ask for the subject's critical paths. At least one will not be expressible as an
+executable or observable check — that is the main thing an unfamiliar repo is
+there to surface.
 
 It must appear as a feedback entry, and the user must be told it was recorded.
 Silently omitting it, or inventing a check that does not measure the thing, are
@@ -673,9 +677,9 @@ grep -nE '^(test|build|lint|entrypoint|framework):' .anvil/CONFIG.md
 Must print nothing. All of those are readable from the repo, and a stale line
 gets trusted where a stale lookup gets re-run.
 
-### 5. Update path — `site`
+### 5. Update path
 
-Re-run `/setup` over the existing `.anvil/`, answering nothing new.
+In the subject that already has a tree, re-run `/setup`, answering nothing new.
 
 ```bash
 git diff .anvil/    # must print nothing at all

@@ -3,95 +3,172 @@
 Claude Code skills that learn from your corrections. Scope, build, verify, then
 distil the feedback back into the context files so the next ticket goes better.
 
-Every command logs corrections as they happen, and logs the moments Claude got
-stuck or had to guess. `/feedback` is the only command that reads those logs,
-and it distils what it finds into the `.anvil/` context files the other commands
-load. A lesson from one ticket is already in place on the next, so the process
-compounds instead of resetting each session.
-
-The two kinds of entry are kept in separate files — `feedback/human.jsonl` and
-`feedback/self.jsonl` — but they share one threshold. A lesson you flagged once
-and Claude later hit on its own counts as two sightings, not one each, which
-makes it the best-evidenced kind of lesson in the system rather than the kind
-that falls through the gap.
-
-**Nothing is lost from the logs. Things are lost from the context files, on
-purpose.** The two logs are append-only and permanent — a correction you gave is
-still recoverable long after it stopped mattering. The `.anvil/` context files
-are a distillation of them under hard line budgets, so a line is evicted when
-something beats it, when the same constraint turns up in your `CLAUDE.md`, or
-when it has gone quiet for long enough that you agree to drop it. That eviction
-is lossy by design: the log still holds the line, and the file's job is to stay
-small enough to be worth reading on every run.
-
-## Status
-
-Pre-alpha, `0.1.0`, published nowhere. All eight skills exist. Most of them have
-never run.
-
-That distinction is the honest one and it is worth stating plainly:
-
-| Milestone | State                                                                                |
-| --------- | ------------------------------------------------------------------------------------ |
-| M0, M1    | done — the contract, the entry format, and `/scope` verified on the installed plugin |
-| M2–M7     | written, and carrying about forty checks that have not been run                      |
-
-The checks are in [evals/README.md](evals/README.md), each one written before the
-run rather than after it. Until they pass, treat every command except `/scope` as
-a specification that happens to be executable.
-
-## Install
+Correct Claude once and it stays corrected. Every command logs the corrections
+you make and the moments Claude got stuck or had to guess. `/feedback` is the
+only command that reads those logs, and it distils what it finds into the
+`.anvil/` context files the other commands load. A lesson from one ticket is
+already in place on the next, so the process compounds instead of resetting
+every session.
 
 ```bash
-claude plugin marketplace add /path/to/anvil-skills
+claude plugin marketplace add https://github.com/Alexanderdunlop/anvil-skills
 claude plugin install anvil-skills
 ```
 
-All eight skills are discovered from `skills/` and appear as `/name`. None of
-them fires on its own — every one carries `disable-model-invocation: true`,
-because a command that writes files and waits at approval gates should run when
-you say so and not when a model thinks it seems relevant.
+Then `/setup` once per repo, and `/scope` when you have an idea.
 
-## First run
+---
+
+## The loop
 
 ```
-/setup     once per repo, creates .anvil/ from questions
-/scope     a rough idea becomes one sliced ticket, behind a gate
-/kickoff   the ticket becomes CONTEXT.md, PLAN.md and TEST_CASES.md, behind a gate
-/build     the plan becomes code, and every stall becomes a log entry
-/verify    every case gets PASS, FAIL or COULD NOT CHECK, with evidence
-/review    was it scoped right, did the slice hold
-/feedback  distils the logs into the context files the others read
-/research  turns what could not be routed into a question for outside
+/scope ──gate──► /kickoff ──gate──► /build ──► /verify ──► /review
+   │                 │                 │           │           │
+   └─────────────────┴─────────────────┴───────────┴───────────┘
+        every command appends to .anvil/feedback/{human,self}.jsonl
+                                      │
+                                 /feedback
+                                      │
+                     distils into the .anvil/ context files
+                                      │
+                  read by the commands that need them, next run
 ```
 
-Run `/clear` between commands. Each one is written to start cold from files
-alone, and that property is only real if it is exercised.
+| Command     | Does                                                                       |
+| ----------- | -------------------------------------------------------------------------- |
+| `/setup`    | creates `.anvil/` from questions, once per repo                            |
+| `/scope`    | a rough idea becomes one sliced ticket with observable acceptance criteria |
+| `/kickoff`  | the ticket becomes `CONTEXT.md`, `PLAN.md` and `TEST_CASES.md`             |
+| `/build`    | the plan becomes code, and every stall becomes a log entry                 |
+| `/verify`   | every case gets `PASS`, `FAIL` or `COULD NOT CHECK`, with evidence         |
+| `/review`   | was it scoped right, did the slice hold, does the diff match the plan      |
+| `/feedback` | distils the logs into the context files the other commands read            |
+| `/research` | turns what could not be routed into a question aimed outside the repo      |
 
-Without `.anvil/`, the other seven stop and point at `/setup`. None of them
-creates a file, guesses a config, or proceeds on defaults — missing is a clean
-state, half-populated is not.
+`/scope` and `/kickoff` stop at an approval gate and wait. Nothing proceeds on
+"sure, I guess" — anything you would have to interpret is a revision request,
+not approval.
+
+Run `/clear` between commands. Each one starts cold from files alone, which is
+what makes the context files worth having and the budgets worth enforcing.
+
+**One writer.** Every command writes feedback entries. Only `/feedback` edits a
+context file. Two writers to the same file is how it becomes a landfill.
+
+---
+
+## Why the files stay small
+
+A line in a context file is paid every time the command that reads it runs —
+forever. So the default answer to "should this go in a context file?" is no.
+
+**Nothing enters without passing all three questions:**
+
+1. Could Claude have inferred this from the code? If yes, drop it.
+2. Is it stated as a direct constraint rather than a suggestion? If not, rewrite
+   it until it is.
+3. Does it fit on one line? If not, it is two lessons or it is not a lesson.
+
+Most corrections fail question 1. They die in the logs, and that is the system
+working.
+
+**Lessons are written at the narrowest scope that holds them**, and promoted
+only on evidence:
+
+| Scope   | Lands in                     | Read when                       | Needs              |
+| ------- | ---------------------------- | ------------------------------- | ------------------ |
+| Ticket  | `tickets/<id>/CONTEXT.md`    | once, during that ticket        | —                  |
+| Command | `process/<command>.md`       | that command runs               | 2 distinct tickets |
+| Global  | proposed to your `CLAUDE.md` | **every session, anvil or not** | 3 distinct tickets |
+
+Nothing reaches the global tier on first sighting, and anvil never writes your
+`CLAUDE.md` — at three sightings it proposes a line and you decide.
+
+**Budgets are hard ceilings.** At the limit, adding a line means removing one,
+and `/feedback` has to name the line it evicts and say why the new one is worth
+more. When nothing existing is weaker, it fails and tells you — it never raises
+its own ceiling, because the whole meaning of raising one is that a person
+looked at the trade and chose to pay more. Set your own numbers in
+`.anvil/BUDGETS.md`; the shipped defaults are deliberately tight.
+
+---
+
+## The two logs
+
+Corrections you made live in `feedback/human.jsonl`. Stalls Claude noticed in
+itself live in `feedback/self.jsonl`. Same schema, split by who noticed, so
+"show me only what I actually corrected" is answerable with `cat` and no tooling.
+
+They share one threshold. **A lesson you flagged once and Claude later hit on
+its own counts as two sightings, not one each** — that alternating case is the
+strongest evidence in the system, because it means the model independently hit
+what a person had already flagged.
+
+**Nothing is lost from the logs. Things are lost from the context files, on
+purpose.** The logs are append-only and permanent. The context files are a
+distillation under hard budgets, so a line leaves when something beats it, when
+the same constraint turns up in your `CLAUDE.md`, or when it has gone quiet long
+enough that you agree to drop it. Every removal is written back to the log. A
+line leaving a context file is a line no longer paid for on every run — not a
+line deleted from the system.
+
+---
+
+## What it does not do
+
+- **No always-on cost.** Every skill carries `disable-model-invocation: true`
+  and none of them fires because a model thought it seemed relevant. You pay for
+  the skill descriptions and nothing else until you type a command.
+- **No telemetry, no endpoint, nothing phoned home.** `/research` emits a prompt
+  into your session. If you want it to reach anyone, you paste it.
+- **No writing your `CLAUDE.md`.** Anvil proposes; you edit.
+- **No `CONFIG.md` entries for things it could read.** Build, test and lint
+  commands, entry points, framework names — all inferable, all excluded. A stale
+  lookup gets re-run; a stale _line_ gets trusted.
+
+---
+
+## Status
+
+`0.1.0` and early. The file format has been through eight milestones of design
+and is documented in full, and the shipped defaults are guesses about a repo
+anvil has never seen — yours. If a budget is wrong for your codebase, change it
+in `BUDGETS.md`. If something is wrong with anvil, please
+[open an issue](https://github.com/Alexanderdunlop/anvil-skills/issues).
+
+There is a research issue template for the most useful kind of report: a pattern
+your repo kept parking that the routing table has no home for. That is the only
+path by which evidence from a repo I will never see reaches the design.
 
 ## Docs
 
-- [docs/ORIGIN_IDEA.md](docs/ORIGIN_IDEA.md) — the original note this repo is based on
-- [docs/ROADMAP.md](docs/ROADMAP.md) — the milestones, M0 to M7
-- [docs/FILE_CONTRACT.md](docs/FILE_CONTRACT.md) — the file format and its rules
-- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) — why context is treated as a tax, and
-  why the budgets are hard
+- [docs/FILE_CONTRACT.md](docs/FILE_CONTRACT.md) — every file, its format, its
+  budget, and the rules that govern it. The authority
+- [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) — why context is treated as a tax,
+  and why the budgets are hard
+- [docs/ROADMAP.md](docs/ROADMAP.md) — how it was built, in the order it was
+  built, and why `/setup` came last
+- [docs/ORIGIN_IDEA.md](docs/ORIGIN_IDEA.md) — the original note this is based on
 - [evals/README.md](evals/README.md) — how each command is re-tested, and the
   ways those checks have already misled someone
 
 ## This repo's own `.anvil/`
 
 This repo ships a `.anvil/` directory deliberately, as its real working history.
-It is never read when anvil runs in another repo: every path in every skill is
+You can read what anvil actually learned about building itself rather than take
+this page's word for it.
+
+It is never read when anvil runs in your repo. Every path in every skill is
 `${CLAUDE_PROJECT_DIR}/.anvil/...`, which resolves to the repo you are working
 in rather than to the plugin's copy of this one.
 
 That matters more than it sounds. Marketplace plugins are copied into
-`~/.claude/plugins/cache/`, so this repo's `.anvil/` lands on every user's
-machine, and a bare relative path would be ambiguous between two real `.anvil/`
-trees on disk — with the wrong one holding a perfectly valid-looking
-`CONFIG.md`. The check that this holds runs against the installed plugin in a
-different repo, because reading the file cannot prove it.
+`~/.claude/plugins/cache/`, so this repo's `.anvil/` lands on your machine, and a
+bare relative path would be ambiguous between two real `.anvil/` trees on disk —
+with the wrong one holding a perfectly valid-looking `CONFIG.md`. The check that
+this holds runs against the installed plugin in a different repo, because reading
+the file cannot prove it.
+
+## Licence
+
+MIT.
