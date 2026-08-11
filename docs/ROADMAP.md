@@ -20,7 +20,8 @@ used in anger first.
 | M2    | in progress | `/feedback` written, and thirteen written checks it has yet to pass   |
 | M3    | in progress | six tickets scoping the remaining commands, ids 0001–0006            |
 | M4    | in progress | `/kickoff` and `/build` written, plus eleven checks for the pair      |
-| M5–M7 | not started | —                                                                    |
+| M5    | in progress | `/verify` written, and the MCP degradation question closed            |
+| M6–M7 | not started | —                                                                    |
 
 **The ticket numbering above was wrong and is corrected here.** This list ran
 0002–0007 on the assumption that an earlier milestone had minted 0001. None had
@@ -605,9 +606,29 @@ review code, so M5 is where its 30-line default meets a real diff.
 - Produces **no** judgment output: no opinions on scope, size, or whether the
   work was worth doing. Those belong to M6.
 
+**What M5 has.** The skill, `process/verify.md` as a title line, seven checks,
+and the MCP question closed in `FILE_CONTRACT.md` §7: a `COULD NOT CHECK`
+verdict that names its cause and carries the manual steps, and a run that
+completes either way.
+
+`CRITICAL_PATHS.md` and `REVIEW_RULES.md` are unchanged, and that is the honest
+state rather than an oversight. Both were to be revised "against real use", and
+there has been none — `/verify` is `REVIEW_RULES.md`'s first consumer and it has
+not yet read it against a diff. The 30-line default meets a real diff in `site`,
+not here.
+
+**The PR-template question stays parked.** §7 parks it until `/verify` exists
+and there is something real to report. Half of that is now true. The other half
+is not, and a decision about touching a repo's shared template is worth
+exactly nothing taken before the command has ever run.
+
 **Risk retired.** That an MCP dependency silently breaks the "works in any repo,
 any language" constraint, and that `/verify` drifts into subjective territory
 and starts duplicating `/review`.
+
+The second is addressed by construction — three verdicts, no opinions, and the
+ticket body deliberately unread. The first is specified and unexercised: a
+degradation path that has never degraded is a paragraph, not a property.
 
 ---
 

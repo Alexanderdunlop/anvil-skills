@@ -458,3 +458,77 @@ wc -l .anvil/process/kickoff.md
 This is the check the whole system exists for — a stall observed by one command
 changing the behaviour of a different one. A separate stuck-file could never do
 it, which is why there is not one.
+
+---
+
+## Manual re-test — `/verify`
+
+Runs in `site`. The degradation check is only meaningful in a repo where smoke
+tests would otherwise work, which rules out this one.
+
+### 1. Every line gets a verdict
+
+```bash
+wc -l < .anvil/tickets/<id>/TEST_CASES.md
+grep -vc '^#\|^$' .anvil/CRITICAL_PATHS.md
+grep -vc '^#\|^$' .anvil/REVIEW_RULES.md
+```
+
+The verdict count in `VERIFY.md` covers all three sets. A skipped case is
+invisible in the output, which is what makes a partial run look like a clean one.
+
+### 2. Evidence, not assertion
+
+```bash
+grep -n 'PASS' .anvil/tickets/<id>/VERIFY.md
+```
+
+Every `PASS` names a command and what it returned. If "works correctly", "was
+tested" or "looks right" appears anywhere in the file, the check has failed —
+those are the exact phrases a run reaches for when it did not actually look.
+
+### 3. Degradation — the portability check
+
+Fresh session with **no MCP server available** and `smoke: none` in `CONFIG.md`.
+
+Pass conditions, all of them:
+
+- the run completes and writes `VERIFY.md`
+- smoke cases read `COULD NOT CHECK`, and each says which cause it was
+- each of those lines carries the manual steps
+- no case became a `PASS`
+- it did not ask the user to install anything
+
+Then repeat with `smoke:` naming a server that is genuinely unavailable. Same
+result, different reason on the line.
+
+### 4. It does not stop at the first failure
+
+Break something a test case covers. Every remaining case must still get a
+verdict, and the `FAIL` must name what the command returned.
+
+### 5. Re-run overwrites
+
+```bash
+wc -l .anvil/tickets/<id>/VERIFY.md    # before and after a second run
+```
+
+Same case set, same line count. A file that grew is appending history that
+belongs in git.
+
+### 6. No judgment leaked in
+
+Read `VERIFY.md` and the run's report for any opinion about scope, sizing or
+whether the work was worth doing. There must be none — that is `/review`, and
+this is the milestone where the two are most likely to blur.
+
+### 7. Rules and process stayed in their own files
+
+Read the feedback entries the run produced. A lesson about what to look for in
+the diff must be `category: "review"`; a lesson about how the command runs must
+be `process:verify`. Lines landing in the wrong one is the failure mode M5 is
+watching for.
+
+```bash
+git status --short .anvil/    # no context file edited by the run
+```
