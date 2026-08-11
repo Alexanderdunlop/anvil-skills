@@ -838,6 +838,32 @@ per-file sequences would make it ambiguous which log to look in.
   Possibly a CONFIG entry, possibly a missing design system. (2026-08-14)
 ```
 
+#### Closing a parked entry
+
+> **When a parked entry's question has been answered, `/feedback` removes its
+> bullet and flips the entry to `dropped`, logging the removal like any other.**
+
+Found at M3, from `fb-0007` and `fb-0008`. Both were parked as open questions
+about the contract, both were answered by the M2 change in §4.6 — and both were
+still sitting in `unrouted.md` afterwards, because nothing in this document ever
+took a bullet out. Two of the three entries in the pile were settled business.
+
+That is not a cosmetic problem. §4.7 gives this file one job beyond storage:
+the count on exit is the signal that the category table is wrong, and a count
+that only ever goes up stops being a signal after the first few answers. A pile
+that cannot shrink is a pile nobody reads.
+
+`dropped` therefore means **no longer awaiting a route** — it failed admission
+question 1, or its question has since been answered. The two are the same state
+from the file's point of view, and inventing a fifth status to distinguish them
+would spend a schema change on a distinction only a human reading the log cares
+about. Which one it was is recoverable: an admission failure names the question
+that killed it, and an answered one names where it was answered.
+
+`/feedback` never decides on its own that a question has been answered. The
+human says so, exactly as with trigger 3 in §6 — the evidence for "this is
+settled" is a judgment about a document, not something visible in the logs.
+
 ---
 
 ### 4.8 `.anvil/tickets/<id>/`
