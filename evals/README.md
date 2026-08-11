@@ -154,3 +154,193 @@ entry lost.
 
 Repeat check 4 in a repo of a different language. Anything repo-specific that
 leaked into the skill shows up here and nowhere else.
+
+---
+
+## Manual re-test — `/feedback`
+
+Run after any change to `skills/feedback/SKILL.md`. Checks 1 and 2 are static.
+The rest each need a fresh session against the **installed** plugin — see
+"Iterating between runs" above, because an edit in the working tree is invisible
+to the thing you are testing.
+
+**These checks mutate `.anvil/`, which is committed.** Every one of them ends
+with a restore, and the milestone is not done until `git status --short` is clean
+apart from the intended changes.
+
+> **Never forge a log entry to reach a condition.** No hand-edited `ts`, no
+> hand-edited `ticket`. `FILE_CONTRACT.md` §8 ships these logs as the honest
+> evidence for anvil's central claim, and a forged line is indistinguishable
+> from a real one to everyone who reads it afterwards. Every check below reaches
+> its condition by lowering a threshold in a temporary `BUDGETS.md` instead.
+
+### 1. Path rule and always-on cost, static
+
+```bash
+grep -rn '\.anvil/' skills/ | grep -v CLAUDE_PROJECT_DIR   # must print nothing
+claude plugin details anvil-skills                          # always-on unchanged
+```
+
+Check 1 of the `/scope` list already covers every skill. The second command is
+the one worth re-reading: adding a second skill must move the always-on number
+by its description only. Anything else means guidance leaked out of the body.
+
+### 2. It writes nothing it does not own
+
+```bash
+grep -n 'BUDGETS' skills/feedback/SKILL.md
+```
+
+Every hit must be a read or a prohibition. A skill that describes writing
+`BUDGETS.md` or `CLAUDE.md` fails before it is ever run.
+
+### 3. Cross-file counting — the rule the split exists for
+
+Needs a real pair: the same `fingerprint` in `human.jsonl` and in `self.jsonl`,
+across two distinct tickets — where the null-ticket bucket counts as one ticket
+(`FILE_CONTRACT.md` §4.6). Do not manufacture the pair. It arrives from real
+runs, and until it does this check is **pending**, not passed.
+
+Run `/feedback`. The fingerprint must promote at two sightings, and **both**
+entries must flip to `promoted`, in both files.
+
+```bash
+grep -c promoted .anvil/feedback/human.jsonl .anvil/feedback/self.jsonl
+```
+
+Counted per file it would be one and one and would sit below the threshold
+forever. That is the failure this check exists to catch.
+
+### 4. One in, one out
+
+Fill the target file to its resolved ceiling, then feed it a stronger lesson.
+
+Pass conditions, all of them:
+
+- it names the evicted line and says why the new line beats it
+- the evicted text lands in `self.jsonl` with `"command": "feedback"` and
+  `"category": "unrouted"`
+- `wc -l < <file>` is unchanged, not ceiling + 1
+
+### 5. Hard fail on the shipped default
+
+**No `BUDGETS.md` for this check** — the point is testing the default.
+
+Fill `REVIEW_RULES.md` to 30 lines with genuinely load-bearing checks, then feed
+it a strong new lesson.
+
+```bash
+wc -l < .anvil/REVIEW_RULES.md    # 30 before, 30 after
+ls .anvil/BUDGETS.md              # must not exist, before or after
+```
+
+It must fail and report the conflict. Not 31 lines. Not a silently dropped
+lesson.
+
+### 6. Override resolution
+
+Same file, same lesson as check 5. Now add:
+
+```markdown
+# Budgets
+
+review_rules: 45
+stale_after: 1
+```
+
+`/feedback` must enforce 45, not 30 — the file that failed in check 5 now accepts
+lines, and fails again at 45. The lowered `stale_after` is what makes check 8
+reachable in a repo this young, which is why both keys live in one temporary
+file.
+
+```bash
+rm .anvil/BUDGETS.md    # the repo's real state is defaults
+```
+
+### 7. No self-raise
+
+Run check 5 again. Then:
+
+```bash
+ls .anvil/BUDGETS.md    # must still not exist
+```
+
+It must present **both** ways out — evict a named line, or raise the budget in
+`BUDGETS.md` — and do neither. The absence assertion is the test: check 5 has no
+`BUDGETS.md` to write-protect, so "it did not write one" is the only observable.
+
+Belt and braces, `chmod -R a-w .anvil/` and confirm the run still completes its
+report rather than crashing. Restore with `chmod -R u+w .anvil/`.
+
+This is the rule most likely to be quietly violated, because raising the number
+is always the locally helpful move.
+
+### 8. Trigger 2 — duplication removes, and only on the anvil side
+
+Put a line in `process/scope.md` and the same constraint in this repo's
+`CLAUDE.md`. Create `CLAUDE.md` if it is absent — §0's note that it does not load
+as project context for users is about context loading, not about `/feedback`
+reading a file.
+
+Run on a file **nowhere near its ceiling**. This trigger is not budget-driven and
+testing it under budget pressure tests the wrong thing.
+
+```bash
+git diff --stat CLAUDE.md          # must print nothing
+tail -1 .anvil/feedback/self.jsonl # the removed text, naming trigger 2
+wc -l .anvil/process/scope.md      # down by one
+```
+
+If the removed line's fingerprint has an open `claude-md` proposal, that proposal
+must flip to `promoted` in the same pass.
+
+### 9. Trigger 3 — presents, and removes nothing
+
+With `stale_after: 1` from check 6 still in place, run `/feedback`.
+
+It must name the line, say when it was promoted and how long the fingerprint has
+been quiet, and stop.
+
+```bash
+git diff --stat .anvil/           # no context file changed by this trigger
+```
+
+**A trigger 3 that removes anything on its own is the failure to catch**, and it
+is cheaper to catch now than after twenty real tickets have been promoted on top
+of it.
+
+### 10. Line counts never go up
+
+```bash
+wc -l .anvil/*.md .anvil/process/*.md
+```
+
+Before and after a staleness pass. Down or level. Never up.
+
+### 11. Idempotence
+
+Two consecutive runs, second in a fresh session.
+
+```bash
+git status --short    # must be clean after the second run
+```
+
+It promotes nothing, removes nothing, appends no bullet and no log entry —
+including re-removing something a staleness pass already removed. Re-presenting a
+trigger-3 line the user kept is allowed; changing a file is not.
+
+### 12. The logs survive being written to
+
+```bash
+git diff .anvil/feedback/*.jsonl | grep '^[-+]' | grep -v status
+python3 -c "import json;[json.loads(l) for f in ['human','self'] for l in open('.anvil/feedback/'+f+'.jsonl')]"
+```
+
+The only field that may differ on an existing line is `status`. Any other diff —
+reordered fields, reflowed JSON, a changed `ts` — is a corrupted evidence base,
+and it is corrupted in the file that is supposed to be the permanent record.
+
+### 13. The count on exit
+
+Every run ends by printing the `unrouted.md` count, including when it is zero.
+Above ten, it says the category table needs review.
