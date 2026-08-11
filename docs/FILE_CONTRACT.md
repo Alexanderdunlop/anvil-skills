@@ -1291,9 +1291,22 @@ Deliberately unresolved. Each is parked until evidence arrives.
   smoke-test section, post a PR comment, or do neither. Touching a shared
   template is invasive for a tool that claims to work in any repo. Parked until
   `/verify` exists (M5) and there is something real to report.
-- **MCP smoke tests.** `smoke:` in `CONFIG.md` names an MCP server, but MCP may be
-  absent in any given session. `/verify` must degrade to a manual checklist
-  rather than fail. Confirmed at M5.
+- **~~MCP smoke tests.~~ Decided at M5.** `smoke:` names an MCP server and that
+  server may be absent from any given session, exactly as `smoke: none` may be
+  the setting. Both are normal and neither is an error. `/verify` gives the case
+  a `COULD NOT CHECK` verdict, states which of the two it was, and **carries the
+  manual steps on the line** so a person can finish the job — then continues with
+  every other case.
+
+  The rule that makes this portable is the one about what it must never do: never
+  fail the run for want of a smoke driver, never convert an unchecked case into a
+  pass, and never make the user install something before the command will work. A
+  command that only works where MCP works is not a command that works in any
+  repo, which was the constraint this question was really about.
+
+  Unproven in the same sense as everything else at M5 — the degradation path is
+  specified and has not been exercised against a repo where smoke tests would
+  otherwise succeed.
 - **Ticket ids.** Defaulting to local slugs. If `tracker` ends up always
   pointing at a real backlog, the local path is dead weight and should go. See
   the worktree collision noted under `CONFIG.md`.
