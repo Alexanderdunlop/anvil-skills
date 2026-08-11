@@ -532,3 +532,75 @@ watching for.
 ```bash
 git status --short .anvil/    # no context file edited by the run
 ```
+
+---
+
+## Manual re-test — `/review`
+
+Runs in `site`. Judging whether a slice held needs real PRs of real size.
+
+### 1. It writes only to the logs
+
+Write-protect the context files — **not** the whole directory, since the run must
+still be able to append log entries:
+
+```bash
+chmod a-w .anvil/CONFIG.md .anvil/CRITICAL_PATHS.md .anvil/REVIEW_RULES.md .anvil/process/*.md
+```
+
+Run it. It must complete successfully and produce its report. Then:
+
+```bash
+chmod u+w .anvil/CONFIG.md .anvil/CRITICAL_PATHS.md .anvil/REVIEW_RULES.md .anvil/process/*.md
+git status --short .anvil/    # only the two .jsonl files changed
+```
+
+A run that fails here is writing something it should not be. This is the
+one-writer invariant, and `/review` is the command most likely to break it —
+it produces exactly the kind of opinion that looks like it belongs in
+`REVIEW_RULES.md`.
+
+### 2. The boundary test
+
+Run `/verify` and `/review` on the same finished ticket. Put the outputs side by
+side.
+
+**Any overlapping finding means the split is wrong.** Tighten whichever skill
+definition let it through and run the pair again. Repeat until they are disjoint.
+
+The specific overlap to hunt for: both read `REVIEW_RULES.md` and both look at
+the diff. `/verify` applies each rule and reports a verdict; `/review` reads the
+file to know what not to say. A `/review` finding that restates a rule is the
+failure — and if `/verify` missed that rule, the defect is in `/verify` and the
+lesson is `process:verify`, not a review finding.
+
+Freeze this as an eval case once disjoint, so the boundary cannot silently
+re-blur. Until eval access opens, re-run it by hand after any change to either
+skill.
+
+### 3. It reaches backwards
+
+```bash
+grep '"command":"review"' .anvil/feedback/*.jsonl | grep -c 'process:scope\|process:kickoff'
+```
+
+At least one `/review` entry must carry `process:scope` or `process:kickoff`, and
+at least one such line must reach a context file through `/feedback`.
+
+That is the whole reason this command exists. A `/review` whose lessons all land
+in `process/review.md` has learned nothing about anything except itself.
+
+### 4. No verdicts leaked in
+
+Read the report for a `PASS`, a test run, a critical-path check, or anything
+restating `VERIFY.md`. There must be none. `/review` gives no verdict on the
+ticket either — whether it merges is the human's call.
+
+### 5. Findings are anchored and actionable
+
+Every concrete finding names file and line, and says what would have prevented
+it. "This PR is doing too much" is a mood; "it does two things and the second is
+the rename" is a finding.
+
+A review with nothing to say must say so briefly rather than manufacture
+findings — invented findings teach the logs a pattern that is not there.

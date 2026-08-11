@@ -551,6 +551,26 @@ a `process/verify.md` line. If it only means anything while reading code, it is
 a `REVIEW_RULES.md` line. `/feedback` applies that test when routing between
 `process:verify` and `review`.
 
+**The two readers read it for opposite reasons**, settled at M6 while drawing the
+boundary between them:
+
+| Reader    | Reads it to know          |
+| --------- | ------------------------- |
+| `/verify` | what to check, and report |
+| `/review` | what **not** to say       |
+
+`/verify` applies every line to the diff and produces a verdict per rule with
+evidence. By the time `/review` runs, that is done — so a `/review` finding that
+restates a rule is noise in both directions. Either `/verify` caught it and the
+finding is a repeat, or `/verify` missed it and the defect is in `/verify`, which
+makes it a `process:verify` entry rather than a review finding.
+
+Without this, the file has two consumers doing the same thing to the same diff,
+which is the `/verify`-versus-`/review` overlap M6 exists to retire. It is
+recorded here rather than in either skill because it is a fact about the file,
+and a rule stated in one of two skills is a rule the other one can drift away
+from.
+
 ---
 
 ### 4.5 `.anvil/process/<command>.md`

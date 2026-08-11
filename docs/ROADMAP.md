@@ -21,7 +21,8 @@ used in anger first.
 | M3    | in progress | six tickets scoping the remaining commands, ids 0001–0006            |
 | M4    | in progress | `/kickoff` and `/build` written, plus eleven checks for the pair      |
 | M5    | in progress | `/verify` written, and the MCP degradation question closed            |
-| M6–M7 | not started | —                                                                    |
+| M6    | in progress | `/review` written, and the boundary against `/verify` written down    |
+| M7    | not started | —                                                                    |
 
 **The ticket numbering above was wrong and is corrected here.** This list ran
 0002–0007 on the assumption that an earlier milestone had minted 0001. None had
@@ -665,9 +666,30 @@ Tree B — .anvil/
   originated from a `/review` entry — proving the loop reaches backwards into
   earlier commands, which is the whole reason `/review` exists.
 
+**What M6 has.** The skill, `process/review.md` as a title line — which completes
+all five — five checks, and one contract change that came out of drawing the
+boundary rather than out of a run.
+
+**The overlap, and where it actually was.** Both commands read
+`REVIEW_RULES.md` and both look at the diff, which is the collision the boundary
+test is designed to find. `FILE_CONTRACT.md` §4.4 now states the split: `/verify`
+reads the file to know what to check, `/review` reads it to know what **not** to
+say. A `/review` finding that restates a rule is either a repeat of `/verify`'s
+verdict or evidence that `/verify` missed it — and the second is a
+`process:verify` entry, not a review finding.
+
+It is written into the contract rather than into either skill on purpose. A rule
+stated in one of two skills is a rule the other one drifts away from, which is
+how the overlap would come back after being closed once.
+
 **Risk retired.** The `/verify` vs `/review` overlap, tested rather than
 asserted. And the "two writers" failure, where a second command starts editing
 context files and the one-writer invariant quietly dies.
+
+Neither is retired. The boundary is now asserted precisely, which is not the same
+as tested — the definition of done says run both on one finished ticket and
+compare, and that needs `site`. The write-protect check is likewise specified and
+unrun.
 
 ---
 
