@@ -4,10 +4,12 @@ Claude Code skills that learn from your corrections. Scope, build, verify, then
 distil the feedback back into the context files so the next ticket goes better.
 
 Correct Claude once and it stays corrected. Every command logs the corrections
-you make and the moments Claude got stuck or had to guess. `/feedback` is the
-only command that reads those logs, and it distils what it finds into the
-`.anvil/` context files the other commands load. A lesson from one ticket is
-already in place on the next, so the process compounds instead of resetting
+you make and the moments Claude got stuck or had to guess, and `/feedback`
+captures the rest — the things you only say afterwards, in ordinary conversation.
+
+`/improve` reads those logs and recommends what should enter the `.anvil/`
+context files the other commands load. You approve, it writes, and the lesson is
+in place for every run after that — so the process compounds instead of resetting
 every session.
 
 ```bash
@@ -26,10 +28,11 @@ Then `/setup` once per repo, and `/scope` when you have an idea.
    │                 │                 │           │           │
    └─────────────────┴─────────────────┴───────────┴───────────┘
         every command appends to .anvil/feedback/{human,self}.jsonl
+                    /feedback adds what you say outside a run
                                       │
-                                 /feedback
+                                  /improve
                                       │
-                     distils into the .anvil/ context files
+                    recommends, you approve, it writes
                                       │
                   read by the commands that need them, next run
 ```
@@ -42,7 +45,8 @@ Then `/setup` once per repo, and `/scope` when you have an idea.
 | `/build`    | the plan becomes code, and every stall becomes a log entry                 |
 | `/verify`   | every case gets `PASS`, `FAIL` or `COULD NOT CHECK`, with evidence         |
 | `/review`   | was it scoped right, did the slice hold, does the diff match the plan      |
-| `/feedback` | distils the logs into the context files the other commands read            |
+| `/feedback` | captures what you say into the logs, drafted from the conversation         |
+| `/improve`  | reads the logs, recommends context-file changes, writes on your yes        |
 | `/research` | turns what could not be routed into a question aimed outside the repo      |
 
 `/scope` and `/kickoff` stop at an approval gate and wait. Nothing proceeds on
@@ -52,8 +56,10 @@ not approval.
 Run `/clear` between commands. Each one starts cold from files alone, which is
 what makes the context files worth having and the budgets worth enforcing.
 
-**One writer.** Every command writes feedback entries. Only `/feedback` edits a
-context file. Two writers to the same file is how it becomes a landfill.
+**One writer, and it asks first.** Every command writes feedback entries. Only
+`/improve` edits a context file, and it edits nothing you have not approved in
+that run. Two writers to the same file is how it becomes a landfill; one writer
+that never asks is how it fills with plausible lines nobody agreed to.
 
 ---
 
@@ -84,12 +90,17 @@ only on evidence:
 Nothing reaches the global tier on first sighting, and anvil never writes your
 `CLAUDE.md` — at three sightings it proposes a line and you decide.
 
-**Budgets are hard ceilings.** At the limit, adding a line means removing one,
-and `/feedback` has to name the line it evicts and say why the new one is worth
-more. When nothing existing is weaker, it fails and tells you — it never raises
-its own ceiling, because the whole meaning of raising one is that a person
-looked at the trade and chose to pay more. Set your own numbers in
-`.anvil/BUDGETS.md`; the shipped defaults are deliberately tight.
+**Budgets are hard ceilings.** At the limit, adding a line means removing one, so
+`/improve` names the line it would evict, says why the new one is worth more, and
+lets you pick either or neither. When nothing existing is weaker it stops and
+tells you — it never raises its own ceiling, because the whole meaning of raising
+one is that a person looked at the trade and chose to pay more. Set your own
+numbers in `.anvil/BUDGETS.md`; the shipped defaults are deliberately tight.
+
+**Nothing is written that you did not approve.** `/improve` recommends —
+additions, swaps, and removals — and you take them line by line. Lines leaving is
+where that matters most: a line quietly disappearing is harder to notice than one
+quietly appearing.
 
 ---
 

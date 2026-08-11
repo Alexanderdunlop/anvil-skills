@@ -19,7 +19,7 @@ in anger first.
 | --- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
 | M0  | the contract, the entry format           | a schema designed against imagined corrections rather than real ones                     |
 | M1  | `/scope`                                 | approval gates that do not hold; commands that cannot start cold; paths reading the wrong tree |
-| M2  | `/feedback`                              | a compounding loop that is a diagram rather than a mechanism; budgets that are advisory  |
+| M2  | `/improve`                               | a compounding loop that is a diagram rather than a mechanism; budgets that are advisory  |
 | M3  | six tickets, scoped by the tool          | a process that works on toy input and collapses on real input                            |
 | M4  | `/kickoff` and `/build`                  | plan files too thin to build from, or too fat to read                                    |
 | M5  | `/verify`                                | an MCP dependency quietly breaking any-repo portability                                  |
@@ -56,9 +56,10 @@ M1 changed the contract twice, which is the milestone working as intended:
 grew a warning about prose keys. Both came from running the command rather than
 from reading it.
 
-## M2 — `/feedback`
+## M2 — `/improve`
 
-The compounding loop, and budget resolution. Raw entries in, distilled context
+The compounding loop, and budget resolution. Built as `/feedback` and later split
+in two — see below. Raw entries in, distilled context
 files out, with the admission test and the budgets enforced mechanically rather
 than by good intentions.
 
@@ -68,7 +69,7 @@ being real.
 Budget resolution is three separate things and M2 keeps them separate: the
 mechanism is not optional, the number is a project's to set, and the tool may
 never move the number itself. At the ceiling with nothing weaker to evict,
-`/feedback` fails, presents both ways out, and takes neither.
+`/improve` fails, presents both ways out, and takes neither.
 
 Three contract questions had to be answered before anything could be counted:
 
@@ -178,10 +179,35 @@ tell the two apart.
 
 ---
 
+## After M7 — the capture split
+
+The first real run in someone else's repo found the hole that eight milestones of
+dogfooding had not: **feedback given outside a command run had nowhere to go.**
+Every skill flushes what it saw during its own run, which covers corrections made
+*while a command is running* and none of the rest — the verdict on how a whole
+flow went, the annoyance recalled three tasks later, the correction given in
+ordinary conversation. In the run that found it, that feedback went into the
+model's own memory, which is not the repo's evidence base and compounds for
+nobody.
+
+That produced two changes. `/feedback` became the capture command — it drafts
+entries from the conversation, the user picks, and it touches no context file.
+The distiller became `/improve`, and it now recommends every change rather than
+writing on its own authority once a threshold is met.
+
+Capture stayed manual rather than becoming automatic, and that is the more
+interesting of the two decisions. Automatic capture is the obvious improvement:
+nothing is forgotten. But nothing filters what enters a log — the admission test
+guards context files, not logs — and a command minting fingerprints unsupervised
+will eventually give two unrelated annoyances the same key, reach a threshold,
+and promote a line nobody meant. The human deciding *this is worth logging* is
+the cheapest filter in the system, sitting at the one stage that otherwise had
+none.
+
 ## Choosing what to build against
 
 Milestones M0–M3 were built against this repo itself. They exercise `/scope` and
-`/feedback`, which need real corrections and nothing else, and a markdown repo is
+`/improve`, which need real corrections and nothing else, and a markdown repo is
 sufficient for that.
 
 From M4 the subject has to be a repo with something to build: a test runner, a

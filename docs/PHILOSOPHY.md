@@ -73,7 +73,7 @@ the verdict.
 ## The budget is the feature
 
 Every context file has a hard line ceiling. At the ceiling, adding a line means
-removing one, and `/feedback` has to name the line it is evicting and say why the
+removing one, and `/improve` has to name the line it is evicting and say why the
 new line beats it. If nothing existing is weaker, it fails and asks you.
 
 The failure is not a rough edge to be smoothed out later. It is the only moment
@@ -81,7 +81,7 @@ in the system where someone is made to say which of two constraints actually
 matters. Without a ceiling every addition is an append, ranking never happens,
 and pruning waits for a cleanup nobody schedules.
 
-Which is why `/feedback` may not raise a budget itself, even though it knows the
+Which is why `/improve` may not raise a budget itself, even though it knows the
 number and the file is right there. Raising a ceiling is a human decision by
 definition — the entire meaning of the act is that someone looked at the trade
 and chose to pay more. A tool that raises its own ceiling when the ceiling is
@@ -94,6 +94,11 @@ a project raising one in `BUDGETS.md` is making an informed decision, not failin
 A budget that only ever goes up is the signal worth acting on: it means lessons
 have stopped being distilled and started being accumulated, and the fix is
 upstream in how they are written.
+
+The same reasoning is why every context-file change is a recommendation rather
+than an action. The mechanism was always there to force a person to rank two
+constraints; confining that to the moment a file happens to be full was the
+arbitrary part.
 
 ## Losing lines is the point
 
@@ -134,10 +139,19 @@ what it infers. A half-guessed config file is worse than a missing one, because
 missing is a clean state and half-populated is a file nobody authored that
 everyone trusts.
 
-## One writer
+## One writer, and it asks
 
-Every command writes feedback entries. Exactly one command — `/feedback` — edits
-context files.
+Every command writes feedback entries. Exactly one command — `/improve` — edits
+context files, and it edits nothing the user has not approved in that run.
+
+Those are two separate protections against two separate failures. One writer
+stops the files filling from several directions at once. Asking first stops the
+one writer filling them with plausible lines nobody agreed to — the same
+landfill, arriving politely and by a single door.
+
+`/feedback` is the other half of that split: it puts entries into the logs and
+touches no context file, so capture stays cheap and frequent while distillation
+stays deliberate and rare.
 
 `/review` is the interesting exclusion, because it produces the most opinionated
 output in the system and has the best case for an exception. It does not get one.

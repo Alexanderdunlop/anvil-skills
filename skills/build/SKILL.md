@@ -122,7 +122,7 @@ unflushed entry is a lost entry — and a stall you did not write down is a stal
 
 - **No file under `${CLAUDE_PROJECT_DIR}/.anvil/` except log lines.** Not
   `CONTEXT.md`, not `PLAN.md`, not `TEST_CASES.md`, not `VERIFY.md`, and no
-  context file. `/feedback` is the only command that edits a context file.
+  context file. `/improve` is the only command that edits a context file.
 - **No new ticket**, however clearly the work has split in two. That is `/scope`.
 - **No plan rewrite.** If `PLAN.md` is wrong, the fix is a log entry and a
   conversation, not an edit — the plan is the record of what was approved, and

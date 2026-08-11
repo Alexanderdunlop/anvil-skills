@@ -168,9 +168,9 @@ leaked into the skill shows up here and nowhere else.
 
 ---
 
-## Manual re-test — `/feedback`
+## Manual re-test — `/improve`
 
-Run after any change to `skills/feedback/SKILL.md`. Checks 1 and 2 are static.
+Run after any change to `skills/improve/SKILL.md`. Checks 1 and 2 are static.
 The rest each need a fresh session against the **installed** plugin — see
 "Iterating between runs" above, because an edit in the working tree is invisible
 to the thing you are testing.
@@ -200,7 +200,7 @@ body into something loaded every session.
 ### 2. It writes nothing it does not own
 
 ```bash
-grep -n 'BUDGETS' skills/feedback/SKILL.md
+grep -n 'BUDGETS' skills/improve/SKILL.md
 ```
 
 Every hit must be a read or a prohibition. A skill that describes writing
@@ -213,7 +213,7 @@ across two distinct tickets — where the null-ticket bucket counts as one ticke
 (`FILE_CONTRACT.md` §4.6). Do not manufacture the pair. It arrives from real
 runs. Manufacturing the pair would defeat the check.
 
-Run `/feedback`. The fingerprint must promote at two sightings, and **both**
+Run `/improve`. The fingerprint must promote at two sightings, and **both**
 entries must flip to `promoted`, in both files.
 
 ```bash
@@ -260,7 +260,7 @@ review_rules: 45
 stale_after: 1
 ```
 
-`/feedback` must enforce 45, not 30 — the file that failed in check 5 now accepts
+`/improve` must enforce 45, not 30 — the file that failed in check 5 now accepts
 lines, and fails again at 45. The lowered `stale_after` is what makes check 8
 reachable in a repo this young, which is why both keys live in one temporary
 file.
@@ -287,15 +287,18 @@ report rather than crashing. Restore with `chmod -R u+w .anvil/`.
 This is the rule most likely to be quietly violated, because raising the number
 is always the locally helpful move.
 
-### 8. Trigger 2 — duplication removes, and only on the anvil side
+### 8. Trigger 2 — proposes a removal, and only on the anvil side
 
 Put a line in `process/scope.md` and the same constraint in this repo's
 `CLAUDE.md`. Create `CLAUDE.md` if it is absent — §0's note that it does not load
-as project context for users is about context loading, not about `/feedback`
+as project context for users is about context loading, not about `/improve`
 reading a file.
 
 Run on a file **nowhere near its ceiling**. This trigger is not budget-driven and
 testing it under budget pressure tests the wrong thing.
+
+It must **propose** the removal, showing both lines, and remove nothing until you
+approve. Decline once and confirm the line is still there.
 
 ```bash
 git diff --stat CLAUDE.md          # must print nothing
@@ -308,7 +311,7 @@ must flip to `promoted` in the same pass.
 
 ### 9. Trigger 3 — presents, and removes nothing
 
-With `stale_after: 1` from check 6 still in place, run `/feedback`.
+With `stale_after: 1` from check 6 still in place, run `/improve`.
 
 It must name the line, say when it was promoted and how long the fingerprint has
 been quiet, and stop.
@@ -329,17 +332,22 @@ wc -l .anvil/*.md .anvil/process/*.md
 
 Before and after a staleness pass. Down or level. Never up.
 
-### 11. Idempotence
+### 11. Idempotence, and the empty run
 
-Two consecutive runs, second in a fresh session.
+Approve nothing:
 
 ```bash
-git status --short    # must be clean after the second run
+git status --short    # clean. Not a line, not a bullet, not a status flip
 ```
 
-It promotes nothing, removes nothing, appends no bullet and no log entry —
-including re-removing something a staleness pass already removed. Re-presenting a
-trigger-3 line the user kept is allowed; changing a file is not.
+Then approve everything and run again in a fresh session, approving nothing. The
+second run must have nothing left to propose — a proposal you accepted that comes
+back is a `status` flip that did not happen, and the second copy of the line looks
+exactly like a line the file earned twice.
+
+Re-raising something you **declined** is allowed and expected, but it must say so
+— "you declined this at two sightings, it is now at five" — rather than asking the
+same question until you give in.
 
 ### 12. The logs survive being written to
 
@@ -356,6 +364,71 @@ and it is corrupted in the file that is supposed to be the permanent record.
 
 Every run ends by printing the `unrouted.md` count, including when it is zero.
 Above ten, it says the category table needs review.
+
+---
+
+## Manual re-test — `/feedback`
+
+The capture command. It writes to the two logs and nothing else.
+
+### 1. It drafts from the conversation
+
+Have a session where you correct something, then run `/feedback` **before**
+clearing. It must propose numbered entries drawn from what actually happened, and
+show each fingerprint.
+
+Nothing is written yet:
+
+```bash
+git status --short .anvil/    # clean until you pick
+```
+
+### 2. You pick, and only that gets written
+
+Approve one of three.
+
+```bash
+tail -1 .anvil/feedback/human.jsonl
+wc -l .anvil/feedback/*.jsonl    # exactly one line more than before
+```
+
+Decline everything and confirm both logs are byte-identical.
+
+### 3. Dictation works after a clear
+
+Fresh session, no history. Say what to log. It must take it, show the shaped
+entry, and write it on approval. Drafting is unavailable here and it should say
+so rather than inventing a session it cannot see.
+
+### 4. It touches nothing else
+
+```bash
+chmod a-w .anvil/CONFIG.md .anvil/CRITICAL_PATHS.md .anvil/REVIEW_RULES.md .anvil/process/*.md
+```
+
+The run must complete. No context file, no `unrouted.md`, no threshold applied,
+no status flipped on an existing entry. Restore with `chmod u+w`.
+
+### 5. Fingerprints get reused
+
+Log a lesson. In a later session, give the same feedback again in different
+words. The second entry must carry the **same** fingerprint as the first.
+
+```bash
+grep -c 'your-fingerprint' .anvil/feedback/*.jsonl
+```
+
+A second sighting under a new name is a first sighting twice, and it is the most
+common way this system fails to learn. This check is the one that catches it.
+
+### 6. Appends only
+
+```bash
+git diff .anvil/feedback/ | grep '^-' | grep -v '^---'
+```
+
+Must print nothing. Every write is an append; no existing line is rewritten,
+reordered or reformatted.
 
 ---
 
@@ -461,7 +534,7 @@ tickets, `/build` is a wrapper around "read the plan": delete it and let
 ### 5. The round trip closes
 
 At least one build-sourced fingerprint reaches two sightings and is promoted by
-`/feedback` into `process/kickoff.md`.
+`/improve` into `process/kickoff.md`.
 
 ```bash
 wc -l .anvil/process/kickoff.md
@@ -598,7 +671,7 @@ grep '"command":"review"' .anvil/feedback/*.jsonl | grep -c 'process:scope\|proc
 ```
 
 At least one `/review` entry must carry `process:scope` or `process:kickoff`, and
-at least one such line must reach a context file through `/feedback`.
+at least one such line must reach a context file through `/improve`.
 
 That is the whole reason this command exists. A `/review` whose lessons all land
 in `process/review.md` has learned nothing about anything except itself.
@@ -686,7 +759,7 @@ git diff .anvil/    # must print nothing at all
 ```
 
 Then re-run adding one new review rule. Only that line appears. Human-written
-lines and lines `/feedback` promoted over three milestones are all still there,
+lines and lines `/improve` promoted over three milestones are all still there,
 unreworded and unsorted.
 
 ### 6. Cold install

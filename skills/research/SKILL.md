@@ -13,7 +13,7 @@ someone else.
 > **This command writes nothing. No context file, no ticket, no log entry, not
 > even an edit to `unrouted.md`.** It emits a prompt to the session and stops.
 
-That is not a small scope, it is the invariant. `/feedback` is the only command
+That is not a small scope, it is the invariant. `/improve` is the only command
 that edits context files, and a second command reading the same evidence base and
 writing to disk would be a second writer under a different name. It must complete
 successfully with the whole of `${CLAUDE_PROJECT_DIR}/.anvil/` write-protected.
@@ -64,7 +64,7 @@ Pick the pattern with the most evidence behind it, and state:
   instructions. If nothing would change, this is not the question worth asking
 
 Aim outward. "Why does this repo keep parking verify entries" is a question
-`/feedback` already has the evidence for. "Is 'how much of the suite to run' a
+`/improve` already has the evidence for. "Is 'how much of the suite to run' a
 process lesson or a config fact, and how do other projects decide" is a question
 this repo cannot answer from here.
 
@@ -89,5 +89,5 @@ Emit the prompt. Do not write it to a file, do not append it to `unrouted.md`,
 do not mark anything `parked` or `dropped`, and do not log the fact that you ran.
 
 If acting on the answer produces a change, that change comes back through the
-normal route — a correction during a command, logged, promoted by `/feedback` on
+normal route — a correction during a command, logged, promoted by `/improve` on
 evidence. Not from here.

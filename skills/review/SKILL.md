@@ -103,7 +103,7 @@ findings to look thorough teaches the logs a pattern that is not there.
 
 This is the output that outlives the review. A finding said out loud once
 improves one PR; the same finding logged with a fingerprint improves every
-future ticket, because `/feedback` promotes it into the file the responsible
+future ticket, because `/improve` promotes it into the file the responsible
 command reads.
 
 ```json
@@ -156,7 +156,7 @@ Not `REVIEW_RULES.md`, however plainly this diff proves a rule is missing. Not
 `process/scope.md`, however sure you are the lesson will reach two sightings.
 Not `CRITICAL_PATHS.md`, not `CONFIG.md`.
 
-`/feedback` is the only command that edits a context file. The threshold exists
+`/improve` is the only command that edits a context file. The threshold exists
 because one sighting is an anecdote, and a `/review` that writes its own
 conclusion straight into a file has skipped the evidence bar every other lesson
 had to clear.

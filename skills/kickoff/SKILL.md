@@ -78,7 +78,7 @@ imposed from somewhere outside the code.
 
 Ticket-tier lessons go here too — a correction that applies to this ticket and
 no other. Log it with `"category": "ticket"` in the same run, because this file
-is where that category lands and `/feedback` will not write it later.
+is where that category lands and `/improve` will not write it later.
 
 ### `PLAN.md`
 
@@ -172,7 +172,7 @@ ever learned.
 unflushed entry is a lost entry.
 
 **Edit no context file.** Not `process/kickoff.md`, not `CONFIG.md`, not any of
-them. `/feedback` is the only command that writes context files, and a second
+them. `/improve` is the only command that writes context files, and a second
 writer is how they turn into a landfill.
 
 ## 7. Start cold
