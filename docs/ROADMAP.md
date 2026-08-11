@@ -17,8 +17,15 @@ used in anger first.
 | ----- | ----------- | ------------------------------------------------------------------- |
 | M0    | done        | contract, entry format, 8 hand-written entries, manifests validate   |
 | M1    | done        | `/scope`, and eight written checks that all pass on the installed plugin |
-| M2    | next        | `/feedback` — the compounding loop, and budget resolution            |
+| M2    | in progress | `/feedback` written, and thirteen written checks it has yet to pass   |
 | M3–M7 | not started | —                                                                    |
+
+**M2 is written, not verified.** The skill and its checks exist; every check that
+needs a live run against the installed plugin is still outstanding, and the
+milestone is not done until they pass. M2 has already resolved three questions
+the contract had left open — `ticket: null` counting (`fb-0008`),
+`command: "manual"` (`fb-0007`), and how "tickets since" is measured for trigger
+3 — all in `FILE_CONTRACT.md`, all forced by having to actually count something.
 
 M1 changed the contract twice, which is the milestone working as intended:
 `/scope` may now read one prior ticket the user names (§3), and the `fingerprint`

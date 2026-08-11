@@ -650,6 +650,33 @@ Anything `/feedback` does per-fingerprint — counting, promoting, marking
 `promoted` — operates on the union of the two files. The split is a storage
 decision and must never become a routing decision.
 
+#### Entries with no ticket
+
+> **Every entry with `ticket: null` counts as one single distinct ticket, in
+> both files together, however many of them there are.**
+
+Resolved at M2, from `fb-0008`, because it blocks every behavioural threshold:
+the M0 and M1 entries were all written outside any ticket, and a rule was needed
+before `/feedback` could count anything at all.
+
+The three readings, and why this one:
+
+| Reading                           | Rejected because                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Each null entry is its own ticket | Two entries from one sitting would promote a line, and "distinct tickets" exists to require independent recurrence |
+| Null entries never count          | Throws away real evidence, and permanently freezes every lesson logged before the repo had tickets                 |
+| **All nulls are one ticket**      | **Chosen** — a null plus a real ticket is two sightings; two nulls are one                                         |
+
+The bucket is a floor on evidence, not a ceiling on it. A lesson logged outside
+any ticket still promotes the moment it recurs inside one, which is the sighting
+that shows it was not a single incident written down twice.
+
+**`command: "manual"`** is the legal value for an entry written by hand outside
+any command run — the M0 seed entries, and anything a human appends directly.
+Resolved at M2 from `fb-0007`. It routes and counts like any other value; it is
+recorded here because §4.6 otherwise enumerates no values for the field and a
+hand-written entry has no capturing command to name.
+
 **Budget.** None, on either file. Never read at runtime by `/scope`,
 `/kickoff`, `/build`, `/verify` or `/review`.
 
@@ -1079,6 +1106,12 @@ same pass. The rule above is unchanged: anvil does not mark a proposal
 `promoted` on its own say-so, it marks one `promoted` on seeing the accepted
 line.
 
+**`ticket` writes nothing either**, for the opposite reason: that line is
+already where it belongs. The capturing command wrote it into the ticket's
+`CONTEXT.md` at capture time, so `/feedback` flips the entry to `promoted` and
+touches no file. Writing it a second time would make `/feedback` a second writer
+to a file another command owns.
+
 ---
 
 ## 6. Budget enforcement
@@ -1096,7 +1129,9 @@ The rule `/feedback` implements:
    is evicting and state why the new line is worth more. Both facts are appended
    to `self.jsonl` as an entry with `command: "feedback"` and
    `category: "unrouted"` carrying the evicted text, so nothing vanishes
-   silently.
+   silently. That entry is born `status: parked`, not `open` — it is a record of
+   a removal rather than a lesson awaiting a route, and an `open` one would
+   route itself into `unrouted.md` on the next run and break idempotence.
 4. If it cannot make the file fit — because no existing line is weaker than the
    new one — `/feedback` **fails hard**, reports the conflict, and presents
    **both** ways out:
@@ -1199,6 +1234,13 @@ and `status: promoted` (§4.6). `/feedback` already reads both logs in full on
 every run, so it reconstructs when a line was promoted and when its fingerprint
 was last seen at **zero additional cost** to anything read at runtime. The
 context files stay pure constraint. The logs already hold the history.
+
+**"Tickets since" is counted, not estimated.** It is the number of distinct
+non-null `ticket` values appearing in entries with a `ts` later than the
+promoting entry's. Non-null, because the null bucket in §4.6 is one ticket by
+definition and would otherwise make a burst of ticket-less entries look like
+elapsed time. This is the one place `stale_after` is compared against anything,
+so it is defined once here rather than in the skill.
 
 **Every removal is logged.** Triggers 2 and 3 append to `self.jsonl` exactly as
 trigger 1 does under step 3 — an entry with `command: "feedback"` and
