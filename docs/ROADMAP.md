@@ -19,7 +19,8 @@ used in anger first.
 | M1    | done        | `/scope`, and eight written checks that all pass on the installed plugin |
 | M2    | in progress | `/feedback` written, and thirteen written checks it has yet to pass   |
 | M3    | in progress | six tickets scoping the remaining commands, ids 0001–0006            |
-| M4–M7 | not started | —                                                                    |
+| M4    | in progress | `/kickoff` and `/build` written, plus eleven checks for the pair      |
+| M5–M7 | not started | —                                                                    |
 
 **The ticket numbering above was wrong and is corrected here.** This list ran
 0002–0007 on the assumption that an earlier milestone had minted 0001. None had
@@ -535,11 +536,28 @@ other self-observed entry.
   by `/feedback` into `process/kickoff.md` — proving a stall can complete the
   round trip, which is what a separate stuck-file could never do.
 
+**What M4 has, and what it is missing.** Both skills are written, and
+`process/kickoff.md` and `process/build.md` exist as title lines — created by
+hand because `/setup` does not exist yet, seeded with nothing, exactly as §4.5
+requires.
+
+Every remaining item on the list above needs `site`: three real tickets, a cold
+build from the plan files, and the round trip where a build stall promotes into
+`process/kickoff.md`. None of it is checkable here. `anvil-skills` has no test
+runner, no build and no smoke path, which is the reason the subject repo changes
+at this milestone rather than later.
+
+The survival test is the one to hold to its deadline. "Decide at the end of M4"
+means the end of M4, because a `/build` that has not earned its place gets more
+expensive to delete with every command wired to it.
+
 **Risk retired.** That plan files are either too thin to build from or too fat
 to be worth reading — the budgets in the contract are guesses until three real
 tickets test them. And the risk that `/build` is a command with no reason to
 exist, which is cheaper to discover before `/verify` and `/review` are wired to
 it.
+
+Neither is retired yet. Both need the three tickets.
 
 ---
 

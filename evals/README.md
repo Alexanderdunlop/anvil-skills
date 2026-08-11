@@ -344,3 +344,117 @@ and it is corrupted in the file that is supposed to be the permanent record.
 
 Every run ends by printing the `unrouted.md` count, including when it is zero.
 Above ten, it says the category table needs review.
+
+---
+
+## Manual re-test — `/kickoff`
+
+Needs a repo with something to plan against. `anvil-skills` has no test runner
+and no build, so these run in `site` from M4 onward.
+
+### 1. Precondition and gate
+
+Fresh session, repo with no `.anvil/`: it must say to run `/setup` and write
+nothing.
+
+Then in a repo that has one, run against a real ticket and reply to the
+presented trio with **"sure, I guess"**.
+
+```bash
+git status --short    # clean — no CONTEXT.md, no PLAN.md, no TEST_CASES.md
+```
+
+It revises and presents again, or asks. Then approve explicitly and confirm all
+three appear and the run stops there — no code, no step 1.
+
+### 2. Budgets
+
+```bash
+wc -l .anvil/tickets/<id>/{CONTEXT,PLAN,TEST_CASES}.md    # ≤ 40, ≤ 60, ≤ 40
+```
+
+A trio that does not fit is a ticket that needs slicing, not prose that needs
+compressing.
+
+### 3. Cold start
+
+Fresh session, no history. It must finish having opened `CONFIG.md`,
+`process/kickoff.md` and the ticket body. Opening `REVIEW_RULES.md`, the logs or
+another ticket puts it over its 70-line budget.
+
+### 4. The ticket body is resolved, not assumed
+
+Set `tracker:` to an external value with no reachable integration. It must
+either read a `MIRROR`-labelled `TICKET.md` and say the tracker wins, or stop and
+ask. Opening `TICKET.md` without checking `tracker:` first is the defect.
+
+### 5. Coverage
+
+Every numbered acceptance criterion in the ticket appears in `TEST_CASES.md` as
+at least one case, both sides observable. A criterion that produced no case must
+have been called out as a ticket defect, not quietly dropped.
+
+### 6. `CONTEXT.md` earns its lines
+
+Read it against the files it names. Any line you could have got by opening the
+file fails the admission test and should not be there. A bare list of paths with
+no reasons is the common failure.
+
+---
+
+## Manual re-test — `/build`
+
+### 1. Cold start from the files alone
+
+Fresh session, no history, three plan files and the ticket body.
+
+```bash
+git status --short    # code changes only, nothing under .anvil/ but log lines
+```
+
+If it needed something only the planning conversation held, that is a hole in
+`CONTEXT.md` — and check 3 says it must be in the log rather than worked around.
+
+### 2. It rewrites no plan
+
+```bash
+git diff .anvil/tickets/<id>/PLAN.md    # must print nothing
+```
+
+The plan is the record of what was approved. Editing it makes the approval
+meaningless, and "the plan was wrong" is a log entry and a conversation.
+
+### 3. Stalls are logged, and logged usefully
+
+```bash
+tail -3 .anvil/feedback/self.jsonl
+```
+
+Each entry: `correction: null`, a kebab fingerprint, a `proposed_line` naming
+what the plan should have said, and an `observed` that says **what unblocked
+it** — not only that it was blocked.
+
+### 4. The survival test — decide at the end of M4, not later
+
+```bash
+grep -c '"command":"build"' .anvil/feedback/*.jsonl
+grep '"command":"build"' .anvil/feedback/*.jsonl | grep -c 'process:kickoff'
+```
+
+Across three real tickets. Build entries that route back into `/kickoff` are the
+whole argument for the skill. If the logs hold no build entries after three
+tickets, `/build` is a wrapper around "read the plan": delete it and let
+`PLAN.md` be the interface.
+
+### 5. The round trip closes
+
+At least one build-sourced fingerprint reaches two sightings and is promoted by
+`/feedback` into `process/kickoff.md`.
+
+```bash
+wc -l .anvil/process/kickoff.md
+```
+
+This is the check the whole system exists for — a stall observed by one command
+changing the behaviour of a different one. A separate stuck-file could never do
+it, which is why there is not one.
